@@ -55,7 +55,7 @@ Is CUDA enabled? **{}**.
 """.format(model.max_seq_length, torch.__version__, torch.cuda.is_available())
 
 app = FastAPI(
-    title="Finder",
+    title="Semantic search service",
     description=description,
     summary="Semantic searchs in documents",
     version="0.0.1",
@@ -80,6 +80,7 @@ retriever1 = EmbeddingRetriever(
 )
 retriever2 = BM25Retriever(document_store=document_store)
 reader = FARMReader("MMG/bert-base-spanish-wwm-cased-finetuned-spa-squad2-es-finetuned-sqac", use_gpu=True) 
+#PlanTL-GOB-ES/roberta-large-bne-sqac
   
 class RequestBaseModel(BaseModel):
     class Config:
@@ -364,7 +365,38 @@ def show_documents(filters: FilterRequest, index: Optional[str] = None):
     #print(prediction)
     #print_documents(prediction, max_text_len=100, print_name=True, print_meta=True)
     return prediction
+    
+@app.post("/documents/name_list/", tags=["docs"])
+def list_documents_name(filters: FilterRequest, index: Optional[str] = None):
 
+     """
+        This endpoint allows you to retrieve the filename of all documents loaded.
+        You can filter the documents to retrieve by metadata (like the document's name),
+        or provide an empty JSON object to clear the document store.
+
+        Filter example:
+        
+        To get all documents you should provide an empty dict, like:`'{"filters": {}}`
+        
+        **Simple** `'{"filters": {{"name": ["some", "more"], "category": ["only_one"]}}'`
+        
+        **Advanced** `{"filters":{
+        "type": "article",
+        "date": {"$gte": "2015-01-01", "$lt": "2021-01-01"},
+        "rating": {"$gte": 3},
+        "$or": {
+            "genre": ["economy", "politics"],
+            "publisher": "nytimes"
+        }
+        }}`
+    """
+     prediction = document_store.get_all_documents(filters=filters.filters, index=index, return_embedding=False)
+     res = []
+     for doc in prediction:
+        res.append(doc.meta["name"])
+     res = list(set(res))
+     return res
+    
 @app.post("/documents/delete/", tags=["docs"])
 def delete_documents(filters: FilterRequest, index: Optional[str] = None):
     """
