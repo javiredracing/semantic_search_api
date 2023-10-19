@@ -41,7 +41,7 @@ PREFIX_QUERY = "query: "
 INPUT_FORMATS_FITZ = ["pdf", "xps", "epub", "mobi", "fb2", "cbz", "svg"]
 VALID_FORMATS = ["txt"]
 #https://github.com/deepset-ai/haystack/tree/main/rest_api
-TRANSFORMER = "intfloat/multilingual-e5-small"
+TRANSFORMER = "intfloat/multilingual-e5-base"
 #TRANSFORMER = "mrm8488/distiluse-base-multilingual-cased-v2-finetuned-stsb_multi_mt-es"
 model = SentenceTransformer(TRANSFORMER)
 #print(model)
