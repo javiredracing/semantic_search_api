@@ -91,23 +91,28 @@ siguientes a la entrada en vigor del presente convenio colectivo.
 5.3. Procedimiento y funcionamiento. Tendrán capacidad de convocatoria de la Comisión Paritaria, tanto la Empresa 
 como el Comité de Empresa y cualquiera de las organizaciones sindicales con representatividad en el Comité de 
 Empresa. 
+
 a) Los acuerdos de la Comisión Paritaria se adoptarán en todo caso por mayoría absoluta de cada una de las 
 partes y, aquellos que sean de interpretación, tendrán la misma eficacia que la norma que haya sido 
 interpretada. Los acuerdos quedarán reflejados en las actas que se firmarán el mismo día de la celebración de 
 la reunión, independientemente del sentido de su voto por todos los asistentes y las mismas se remitirán, si 
 procediere por modificación de lo pactado, para su depósito, registro y publicación a los efectos legales llegado 
 su caso. 
+
 b) Como trámite que será previo y preceptivo a toda actuación administrativa o jurisdiccional que se promueva, 
 las partes signatarias se obligan a poner en conocimiento de la Comisión Paritaria cuantas dudas, discrepancias 
 y conflictos colectivos de carácter general, pudieran plantearse en relación con la interpretación y aplicación 
 del mismo, a fin de que, mediante su intervención se resuelva el problema planteado o, si ello no fuera posible, 
 emita dictamen al respecto. Dicho trámite previo se entenderá cumplido en el caso que hubiera transcurrido 
 el plazo de veinticinco días hábiles sin que se haya emitido resolución o dictamen. 
+
 c) La Comisión Paritaria se reunirá siempre que exista una petición formal con motivo de dudas, discrepancias y 
 conflictos colectivos de carácter general. 
+
 d) Convocatoria: La comisión paritaria será convocada con una antelación de quince (15) días naturales, salvo 
 cuando ello no fuera posible y con acuerdo expreso de ambas partes. La convocatoria se hará mediante 
 citación cursada al efecto por el medio más rápido y eficaz de que se disponga. 
+
 e) Orden del día: Al hacer la convocatoria, se incluirá en la misma el orden del día, que recogerá las cuestiones a 
 tratar. Las cuestiones que se promuevan se harán por escrito y su contenido será el suficiente para que se 
 pueda examinar y analizar el problema con el necesario conocimiento de causa. 
@@ -118,18 +123,22 @@ f) Régimen de asistencia: La Comisión quedará válidamente constituida, al ob
 sesiones, cuando asistan al menos dos (2) representantes de cada una de las partes (empresa y representación 
 social), presente o representado. Los miembros de esta comisión podrán delegar el sentido de su voto en 
 alguno de los otros miembros de la Comisión. 
+
 g) Esta Comisión podrá dotarse de un reglamento de funcionamiento interno para aquellas cuestiones no 
 reguladas expresamente en este artículo o que requieran un posterior desarrollo. 
 h) Adopción de Acuerdos: La Comisión Paritaria válidamente constituida adoptará sus acuerdos por mayoría 
 absoluta de cada una de las partes, emitiendo un dictamen al respecto. Los acuerdos relativos a la 
 interpretación y aplicación del convenio colectivo, vincularán a las partes. 
+
 i) Acta de las Reuniones: De todas las reuniones celebradas por la Comisión Paritaria se levantará la 
 correspondiente acta, en la que se hará constar: lugar de la reunión; día, mes y año; nombre, apellidos, 
 organización y firma; existencia o no de quórum; orden del día; y contenido de los acuerdos. 
+
 j) La Comisión Paritaria podrá recabar por vía de ampliación, cuanta información o documentación estime 
 pertinente para una mejor y más completa información del asunto, a cuyo efecto concederá un plazo al 
 proponente que no podrá exceder de cinco días hábiles, debiéndose reunir, una vez que tenga la misma en su 
 poder en un plazo máximo de 3 días hábiles transcurrido el anterior. 
+
 k) Tras la resolución de la Comisión Paritaria o, si no se ha podido emitir el oportuno dictamen, quedará abierta 
 la vía administrativa o judicial competente. 
 
@@ -230,7 +239,8 @@ prestación laboral y con respeto a la dignidad del trabajador.
 8.2. La Empresa, en caso de que razones técnicas u organizativas lo justifiquen y por el tiempo imprescindible para su 
 atención, podrá hacer uso de la movilidad funcional para la realización de funciones no correspondientes al grupo 
 profesional, tanto superiores como inferiores, reintegrándose el trabajador a su antiguo puesto cuando cese la 
-causa que motivó el cambio; debiéndose comunicar la medida y su motivación al Comité de Empresa. 
+causa que motivó el cambio; debiéndose comunicar la medida y su motivación al Comité de Empresa.
+ 
 a) La encomienda de funciones superiores a las del grupo profesional de pertenencia se limitará a un período de 
 seis (6) meses durante un año u ocho (8) meses durante dos años, y el trabajador percibirá las retribuciones 
 previstas para el puesto o funciones efectivamente realizadas, de acuerdo con los correspondientes niveles 
@@ -294,9 +304,11 @@ Adicional Primera del mismo texto legal, y ello de conformidad con lo previsto e
 11.2. Será admitido a las pruebas selectivas convocadas por esta Empresa quien cumpla los requisitos de titulación, 
 así como las condiciones de aptitud y otros requisitos específicos exigibles según la naturaleza diferenciada de 
 determinadas plazas. 
+
 11.3. Con carácter excepcional, por motivos de urgencia y necesidades del servicio debidamente acreditadas podrán 
 cubrirse provisionalmente puestos de trabajo mediante personal interino, conforme a la normativa aplicable 
 previos los procesos selectivos correspondientes. 
+
 11.4. Los criterios generales de selección serán objeto de negociación con la Representación Legal de los Trabajadores, 
 con carácter previo a su aprobación por la empresa. 
 
@@ -336,6 +348,7 @@ promoción interna.
 
 12.4. Los criterios generales de selección para promoción interna serán objeto de negociación con la Representación 
 Legal de los Trabajadores, con carácter previo a su aprobación por la Empresa. 
+
 12.5. Podrán acceder a los procedimientos de promoción interna la plantilla fija que reúnan los requisitos exigidos en 
 la convocatoria, debiendo, en todo caso, tener dos años de servicio activo como empleado fijo en la Empresa y 
 estar en el grupo inmediatamente anterior de titulación. 
@@ -357,6 +370,7 @@ y tras la superación del correspondiente procedimiento público de selección, 
 el artículo 15 del presente convenio colectivo. Es personal temporal el vinculado a la Empresa en virtud de 
 contrato de trabajo de duración determinada, por las causas y plazos previstos en legislación laboral, previa 
 superación del proceso de selección correspondiente. 
+
 13.2. Los contratos de trabajo de carácter temporal se ajustarán a las modalidades previstas en la legislación laboral 
 vigente. El personal contratado será previamente seleccionado mediante convocatoria pública, en la que se 
 garantizarán los principios de igualdad, mérito y capacidad. Las convocatorias estarán sujetas en todo caso a 
@@ -391,9 +405,11 @@ trabajadores, se establecerá la correcta clasificación profesional de los trab
 distribución se hará de acuerdo a grupos profesionales que figuran en el Anexo I y que se tomarán como base. 
 Igualmente, y siempre que las circunstancias del mercado lo requieran, se podrán crear otros nuevos 
 estableciendo las características necesarias para ello. 
+
 14.2. Se entenderá por grupo profesional el que agrupa de forma unitaria las aptitudes profesionales, titulaciones y 
 contenido general de la prestación; y, en su caso, las distintas tareas, funciones, especialidades profesionales, 
 responsabilidades asignadas a cada puesto. 
+
 14.3. La definición de los grupos profesionales se ajustará a criterios y sistema que tengan como objeto garantizar la 
 ausencia de discriminación, tanto directa como indirecta, entre hombres y mujeres. Los grupos profesionales 
 consignados en el presente convenio colectivo tendrán mero carácter enunciativo, sin que, necesariamente, 
@@ -405,6 +421,7 @@ Art. 15 – Período de prueba.
 15.1. El personal que se contrate temporalmente se le establece un periodo de prueba, que no podrá exceder de seis 
 meses para los técnicos titulados ni de dos meses para los restantes trabajadores, salvo que la duración de su 
 contrato sea inferior a los referidos plazos máximos, en cuyo caso se ajustará proporcionalmente. 
+
 15.2. El personal fijo y de nuevo ingreso que acceda definitivamente a una plaza, tanto por los turnos de promoción 
 interna como por acceso libre respectivamente, quedará asimismo sometido a un período de prueba, de una 
 duración no superior a seis meses para los técnicos titulados ni de dos meses para los restantes trabajadores. 
@@ -421,6 +438,7 @@ permanente o simple, de menores, así como cualquier otra situación que sea cau
 contrato de trabajo, que afecten al trabajador durante el período de prueba, interrumpen el cómputo del 
 mismo. Asimismo, interrumpirán el cómputo del período probatorio las licencias y permisos no retribuidos 
 superiores a siete días. 
+
 15.4. Durante el transcurso del período de prueba, la extinción de la relación laboral podrá producirse a instancia de 
 cualquiera de las partes. La no superación del período de prueba a instancia de la Empresa, será notificada por 
 escrito al trabajador y al Comité de Empresa. 
@@ -442,8 +460,10 @@ mismo, sin perjuicio de que, por necesidades del servicio imprevistas y excepcio
 una antelación mínima de cuatro (4) semanas a su realización, motivando las causas, sin perjuicio de las 
 especificidades para la modificación de turnos de reserva de conducción o regulación, todo ello en aras del 
 cumplimiento del servicio público. 
+
 16.3. De igual manera, los cambios de servicios realizados de mutuo acuerdo, entre trabajadores o entre empresa y 
 trabajador se comunicarán en la rotación semanal de cuatro semanas. 
+
 16.4. El orden de prioridad para la asignación de estos días es el siguiente: 
 1º) Vacaciones. 
 2º) Días de fiestas laborables (DF). 
@@ -455,8 +475,10 @@ Art. 17 – Jornada laboral.
 17.1. La jornada de trabajo se podrá distribuir en el cómputo que proceda, con el límite máximo de duración de 
 jornada establecido en el presente convenio colectivo, todo ello en los términos y condiciones establecidas 
 legalmente y de conformidad con las facultades de auto-organización de la Empresa. 
+
 17.2. Con carácter general la duración máxima de la jornada anual ordinaria será de mil seiscientas cincuenta y siete 
 horas con treinta minutos (1.657,5) y 221 jornadas computadas vacaciones, asuntos particulares y festivos. 
+
 17.3. Con carácter general la duración de la jornada semanal ordinaria será de treinta y siete horas y treinta minutos 
 (37,5) de promedio en cómputo anual. 
 Para los conductores, debido a la especificidad de los turnos y los servicios de conducción, el cómputo de horas 
@@ -490,12 +512,15 @@ terminal.
 pudiéndose modificar esta distribución en algún departamento en concreto si es aprobado por la mayoría de 
 los trabajadores afectados, previa información a la comisión de turnos y el visto bueno de la representación 
 legal de los trabajadores. 
+
 17.7. Entre la finalización de un turno y servicio y el inicio del siguiente deberán transcurrir como mínimo 12 horas de 
 descanso, excepcionalmente con acuerdo entre trabajadores o entre trabajador y la empresa se podrá reducir 
 a 11 horas. 
+
 17.8. Los días de trabajo consecutivo no excederán de 5 días. Excepcionalmente con acuerdo entre trabajadores o 
 entre trabajador y la empresa, se podrán ampliar los días de trabajo consecutivos no superando el máximo de 
 9 días. 
+
 17.9. En aquellos departamentos donde existan trabajadores a los que no sea de aplicación el sistema de turnos, la 
 jornada ordinaria de trabajo será realizada en cinco (5) días laborables. Igualmente, y para este colectivo, la 
 jornada se podrá realizar de forma continuada siempre que la misma incluya el horario entre las 08:00 y las 
@@ -519,15 +544,17 @@ Art. 18 – Horario y turnos.
  
 Condiciones Generales: 
 18.1. Se entiende por trabajo a turnos lo regulado en el art. 36.3 del Estatuto de los Trabajadores. 
+
 18.2. Debido al carácter de servicio público que se presta y a las necesidades del mismo, se establecen distintos turnos 
 de trabajo que serán los siguientes:  
-Turno de mañana (De 06:00 a 14:00) 
-Turno de tarde (De 14:00 a 22:00)  
-Turno de noche (De 22:00 a 06:00) 
+Turno de mañana (De 06:00 a 14:00). 
+Turno de tarde (De 14:00 a 22:00). 
+Turno de noche (De 22:00 a 06:00). 
 No habrá turno partido. Si en un futuro hubiera un cambio de la situación de las horas punta y horas valle que 
 generara la necesidad de contratar a nuevos trabajadores, estos podrán contratarse en jornadas parciales. 
 
 18.3. Los turnos entre descansos serán siempre del mismo tipo (mañana, tarde o noche). 
+
 18.4. Para el personal sujeto a turnos, se le asignará preferentemente el mismo turno y servicio por semanas 
 completas (entre descansos), siempre que no se exceda el límite establecido en el artículo 17 de este convenio 
 colectivo; a este efecto el código de servicio de las reservas será preferiblemente el más aproximado al horario 
@@ -575,6 +602,7 @@ regulación, y en todo caso, el cómputo máximo de dicho tiempo será de una ho
 primará un objetivo de equidad en los mismos de forma que al término del año el personal del mismo colectivo 
 de rotación haya tenido una distribución de turnos similar.  
 Condiciones particulares: 
+
 18.9. De acuerdo al plan de circulación vigente a la firma del convenio colectivo, el toma y deje del servicio será el 
 siguiente: 
 • Toma del servicio en talleres y cocheras (TyC): 5 minutos, más el tiempo de preparación del tranvía que son 
@@ -682,14 +710,18 @@ Art. 20 – Guardias.
 Guardias localizadas de mantenimiento 
 20.1. Se establece una guardia localizada, no presencial, para dar cobertura a las incidencias que se den fuera del 
 horario ordinario de los turnos y servicios de mantenimiento. 
+
 20.2. El personal que realice guardia tendrá conocimiento mediante la publicación de la guardia en rotación anual. Se 
 nombrará un (1) técnico de guardia por equipo de trabajo: 
 • De lunes a domingo para sistemas, edificio y vía. 
 • Festivo de esa semana, sábado y domingo para electrificación y material móvil. 
+
 20.3. La guardia de lunes a viernes la realizará el técnico del último turno de trabajo al que pertenece ese grupo de 
 guardia y la finalización del servicio comercial (las 24:00 horas). 
+
 20.4. Los sábados y domingos la guardia comprenderá la franja horaria entre las 00:00 horas del sábado y las 24:00 
 horas del domingo, o cuando se incorpore el personal que desarrolla su servicio en servicio de noche el lunes. 
+
 20.5. Para la distribución de las guardias se hará un reparto equitativo entre todos los trabajadores del equipo que lo 
 conformen. 
 Para el caso de una ausencia prolongada (de más de 4 semanas), las guardias se distribuirán, con acuerdo, entre 
@@ -698,14 +730,18 @@ trabajadores que las realizaron en un período de 1 año a partir de su incorpor
 
 20.6. Si en algún equipo de trabajo, la distribución de las guardias, superara el veinticinco (25) % de los fines de semana 
 del año, la realización de la guardia tendrá carácter voluntario por parte del trabajador. 
+
 20.7. La asignación de la guardia no afectará a la solicitud de vacaciones, con carácter general no se asignará guardia 
 el fin de semana anterior o posterior al disfrute de las vacaciones. 
+
 20.8. Se permitirá cambios entre compañeros para la realización de la guardia, siempre que no limite la funcionalidad 
 de la misma y lo comunique previamente, con carácter general, con al menos 24 horas de antelación y con 
 menos tiempo, si no existiera tal limitación de funcionalidad de la misma. 
+
 20.9. Cuando en algún área y/o equipo se encuentren trabajadores habilitados en las instalaciones de la empresa, en 
 caso de que surja un incidente intervendrá el trabajador que se encuentre en la empresa, en la reparación de la 
 avería. 
+
 20.10.La guardia será movilizada únicamente en caso de averías que imposibiliten garantizar el servicio comercial. No 
 se llamará a la guardia para realizar trabajos programados y cubrir turnos de trabajo. 
 
@@ -749,6 +785,7 @@ incidencias que se produzcan. Se garantizarán, como mínimo, dos fines de seman
 
 20.21 Se establece una tabla retributiva anexa a este documento, que reflejará el valor del plus de guardia mensual 
 para cada grupo que se contempla en el Anexo V del presente convenio colectivo. 
+
 20.22.Se establecen los siguientes grupos de retribución de la guardia: 
 -Grupo 1: Máximo 80 horas año. 
 -Grupo 2: menos de un 50% del Grupo 1. En caso de que se supere este porcentaje estructuralmente pasarán 
@@ -772,7 +809,8 @@ Guardia de Conductor.
 20.27. El personal de guardia estará localizado y pendiente de incorporación según llamamiento, para atender un 
 servicio descubierto de conducción que no pueda ser cubierto por personal de reserva total o parcialmente. Esta 
 guardia localizada computará como jornada diaria de trabajo. 
-20.28.En la rotación anual delos conductores yconductoresde incidencia, con jornada completa diaria, se establecerán 
+
+20.28.En la rotación anual delos conductores y conductores de incidencia, con jornada completa diaria, se establecerán 
 servicios de guardia localizada, a fin de estar disponibles para la incorporación, como último recurso en presencia 
 física, ante un servicio de conducción de un turno descubierto. 
 
@@ -807,6 +845,7 @@ se podrá cubrir con personal voluntario si es necesario.
 20.32. Se permitirá cambios entre compañeros para la realización de la guardia, siempre que no limite la funcionalidad 
 de la misma y lo comunique previamente, con carácter general, con al menos 24 horas de antelación y con 
 menos tiempo, si no existiera tal limitación de funcionalidad de la misma. 
+
 20.33. La empresa facilitará un teléfono móvil con su cargador para la guardia localizada que deberá de ser recogido 
 y devuelto en la empresa o a elección del trabajador podrá proporcionarse un número de teléfono para su 
 localización.
@@ -843,10 +882,12 @@ horario de inicio sea más próximo del servicio a cubrir.
 21.2. La comunicación al servicio de reserva para cubrir un servicio descubierto se realizará dentro de la jornada laboral 
 y con anterioridad al día del servicio se podrá modificar el horario/servicio asignado dentro del turno que le 
 corresponda. 
+
 21.3. Si a un trabajador, al iniciar su jornada con servicio de reserva, se le comunica que debe de realizar un servicio 
 que ha quedado descubierto ese día, se le respetará el horario de inicio y de finalización del servicio de la reserva 
 que tenía asignada ese día. El descanso del servicio de reserva que cubre un servicio descubierto el mismo día se 
 podrá modificar en el margen de las tres (3) horas intermedias con respecto al descanso de la reserva asignada. 
+
 21.4. Se garantiza que se cubrirán dos puestos de regulación si la frecuencia de paso de tranvía es inferior a 10 
 minutos. En este supuesto los descubiertos de conducción no serán cubiertos con reguladores, si no están 
 cubiertos los dos puestos de regulación, salvo que éstos sean sustituidos por alguna persona habilitada para la 
@@ -890,6 +931,7 @@ partes o períodos.
 
 22.2. Las vacaciones se disfrutarán por grupos de trabajo dentro de cada departamento, de modo que las ausencias 
 no perjudiquen a la buena marcha de la empresa, para lo cual se elaborará el correspondiente cuadrante. 
+
 22.3. Todo el personal tendrá que entregar, entre el 15 de julio y el 15 de septiembre de cada año, ambos inclusive, 
 al responsable donde preste sus servicios, su plan de vacaciones para el año siguiente de acuerdo con el resto 
 del personal que compone su grupo. En el supuesto de que en la referida fecha alguna persona no hubiera 
@@ -900,10 +942,12 @@ completas (de lunes a domingo) en el periodo en el que exista disponibilidad.
 
 22.4. El 15 de noviembre se publicará el calendario final de vacaciones de todos los departamentos. En caso de coincidir 
 con sábado, domingo o festivo se publicará el día hábil inmediatamente anterior. 
+
 22.5. Los días de vacaciones pendientes de disfrute en el año natural que le correspondan, podrán ser disfrutados 
 hasta el día 15 de enero del año siguiente. En casos excepcionales y con autorización expresa por parte de la 
 empresa se podrán disfrutar con posterioridad a dicha fecha, no más tarde del 31 de marzo del año natural 
 siguiente. 
+
 22.6. El trabajador tendrá el documento de vacaciones de las fechas que le correspondan con al menos dos meses de 
 antelación, antes del comienzo del disfrute de las mismas. 
 
@@ -988,8 +1032,8 @@ Hasta el día 15 de noviembre la empresa elaborará el calendario final de vacac
 día 15 de noviembre. 
 El día 15 de diciembre la empresa publicará el calendario anual final de servicios. En caso de coincidir con 
 sábado o domingo se publicará el lunes siguiente, coincidiendo con la publicación de la rotación semanal. 
-22.18.Criterios en caso de exceso de peticiones en un mismo periodo: 
 
+22.18.Criterios en caso de exceso de peticiones en un mismo periodo: 
 Solo para los conductores, cuando haya mayor número de solicitudes que disponibilidad para fechas de un 
 determinado periodo, se tendrán en cuenta los siguientes criterios, en este orden: 
 1º) Tendrá prioridad quienes hayan solicitado las vacaciones en el periodo establecido para ello. 
@@ -1170,6 +1214,7 @@ transitorio.
 d) Fallecimiento hijo/a.-En el supuesto de fallecimiento del hijo o hija, el periodo de suspensión no se verá reducido, 
 ni para la madre biológica ni para el progenitor distinto de ella, salvo que, una vez finalizadas las semanas de 
 descanso obligatorio, se solicite la reincorporación al puesto de trabajo. 
+
 e) Discapacidad de hijo/a en el nacimiento, adopción, guarda con fines de adopción o acogimiento y en los 
 supuestos en que fuera múltiple. En el supuesto de discapacidad del hijo o hija en el nacimiento, adopción, 
 guarda con fines de adopción o de acogimiento, la suspensión del contrato tendrá una duración adicional de 
@@ -1183,9 +1228,9 @@ durante la lactancia natural, en los términos previstos en el artículo 26 de l
 de Prevención de Riesgos Laborales, la suspensión del contrato finalizará el día en que se inicie la suspensión del 
 contrato por parto o el lactante cumpla nueve meses, respectivamente, o, en ambos casos, cuando desaparezca 
 la imposibilidad de la trabajadora de reincorporarse a su puesto anterior o a otro compatible con su estado. 
+
 23.9. Adopción, guarda con fines de adopción o acogimiento múltiples. 
 Cada progenitor dispondrá de los periodos de suspensión siguientes: 
-
 En el año 2020, cada progenitor dispondrá de seis semanas a disfrutar a tiempo completo de forma obligatoria 
 e ininterrumpida inmediatamente después de la resolución judicial por la que se constituye la adopción o bien 
 de la decisión administrativa de guarda con fines de adopción o de acogimiento. 
@@ -1429,6 +1474,7 @@ a domingo, tal y como se establece en el artículo 37.6 del Estatuto de los Trab
 cobertura de guardias siempre y cuando sean en jornada completa. 
 25.5. En servicios de cobertura de incidencias se atenderá a aplicar con carácter preferente lo previsto en el apartado 
 25.3. y en su caso otras soluciones que se aprueben en Comisión de Turnos. 
+
 25.6. Adaptación horaria. Las personas trabajadoras tendrán derecho a solicitar las adaptaciones de la duración y 
 distribución de la jornada de trabajo, en la ordenación del tiempo de trabajo y en la forma de prestación, incluida 
 la prestación de su trabajo a distancia, para hacer efectivo su derecho a la conciliación de la vida familiar y laboral. 
@@ -1509,20 +1555,17 @@ productividad, el sentido de la seguridad y la eficacia en el desarrollo del tra
 27.5 Los trabajadores con al menos un año de antigüedad en la empresa tienen derecho a veinte (20) horas anuales 
 retribuidas, para asistir a formación profesional para el empleo, vinculada a la actividad de la empresa, 
 acumulables por un periodo de hasta cinco años. 
+
 27.6 La formación estará integrada dentro de las funciones de los responsables de los departamentos, por lo que 
 formará parte de sus objetivos y tareas. 
+
 27.7 La asistencia a los cursos de formación obligatoria, así como las prácticas que en función del puesto de trabajo 
 se determinen con tal carácter se realizarán dentro de la jornada laboral, computándose como tiempo efectivo 
 de trabajo. La empresa se compromete a planificar la formación preferiblemente dentro de la jornada laboral, 
 si ello no fuera posible, ese tiempo se compensará con descanso según el siguiente cuadro: 
 Horario 
-De lunes a viernes, tiempo de compensación sobre 
-la hora realizada 
-En día sábado, domingo, festivos y 
-nocturnos, tiempo de compensación sobre 
-la hora realizada 
-Diurno 1 hora 2 horas 
-Nocturno 2 horas 2 horas 
+De lunes a viernes, tiempo de compensación sobre la hora realizada: 1 hora diurno, 2 horas nocturno.
+En día sábado, domingo, festivos y nocturnos, tiempo de compensación sobre la hora realizada: 2 horas diurno, 2 horas nocturno.
 
 27.8 El departamento responsable en materia de formación velará por la divulgación de la planificación y de las 
 convocatorias de las distintas acciones formativas para conocimiento de todo el personal, mediante los medios 
@@ -1569,6 +1612,7 @@ Uniformidad y Ropa de trabajo.
 que desempeña en su puesto de trabajo, la uniformidad, calzado y demás prendas adecuadas para el 
 desempeño de sus funciones, y ello al margen de los equipos de protección individual necesarios para proteger 
 la salud e integridad conforme a la Ley de Prevención de Riesgos Laborales. 
+
 28.2 La Empresa entregará a cada trabajador en el momento de incorporarse al puesto de trabajo, el uniforme de 
 acuerdo al puesto a desempeñar y su uso atendiendo a su sexo, sólo será obligatorio durante el desempeño de 
 sus funciones en su puesto de trabajo. La cantidad a entregar será la totalidad de las prendas que se contemplan 
@@ -1654,6 +1698,7 @@ propia seguridad y la de sus compañeros y compañeras.
 f) Facilitar, cuando así proceda, la adaptación de puestos de trabajo para aquellas personas que, por sus propias 
 características personales o estado biológico conocido, incluidas aquellas personas que tengan reconocida una 
 situación de discapacidad física, psíquica o sensorial, sean especialmente sensibles a determinados riesgos. 
+
 g) Facilitar, cuando lo indicado en el punto anterior no sea posible y así proceda, la movilidad de estas personas 
 de existir otros puestos de trabajo compatibles con sus propias características personales o estado biológico 
 conocido. 
@@ -1732,6 +1777,7 @@ Delegados de Prevención.
 31.1 Los Delegados de Prevención son los representantes de los trabajadores con funciones en materia de prevención 
 de riesgos en el trabajo. Serán nombrados por y entre el Comité de Empresa y dispondrán del crédito horario 
 correspondiente por tal condición. 
+
 31.2 El número de Delegados de Prevención que podrán ser designados se ajustará a la escala establecida en el 
 artículo 35.2 de la LPRL, y contarán para el ejercicio de sus competencias y facultades con las garantías 
 inherentes a su condición representativa, conforme a lo dispuesto en los artículos 36 y 37 de la LPRL, que les 
@@ -1766,6 +1812,7 @@ Vigilancia de la Salud.
 33.1 La Empresa garantizará al personal laboral a su servicio la vigilancia periódica de su estado de salud, incluyendo 
 analíticas y reconocimientos médicos, que deberá adaptarse tanto a las condiciones específicas de cada 
 trabajador como a las características y los riesgos del puesto de trabajo que vaya a desempeñar. 
+
 33.2 La vigilancia del estado de la salud implica la realización de los siguientes tipos de reconocimientos médicos: 
 Reconocimientos médicos periódicos, realizados con periodicidad anual, aplicable a su puesto de trabajo.
 Reconocimientos médicos a trabajadores de nueva incorporación o aquellos que se encomienden tareas con 
@@ -1777,6 +1824,7 @@ la prueba de PSA para los hombres mayores de cuarenta (40) años que hayan dado 
 caso de las mujeres y de acuerdo a los protocolos médicos y una vez dado el consentimiento las pruebas serán 
 las de prevención de anemias (Hierro y Transferrina) para todas y las de prevención de osteoporosis (LH y FSH) 
 para las mujeres mayores de treinta y cinco (35) años. 
+
 33.4 El coste de estos reconocimientos correrá en todo caso a cargo de la empresa en su totalidad. 
 
 33.5 Los reconocimientos tendrán en todos los casos carácter obligatorio, debido a que se consideran imprescindibles 
@@ -1977,6 +2025,7 @@ Art. 39 -Régimen y Responsabilidad Disciplinaria.
 39.1 El personal podrá ser sancionado por la empresa, como consecuencia de incumplimientos o infracciones 
 laborales, de acuerdo con la graduación de faltas y sanciones que se establecen en el presente Capítulo y en la 
 legislación aplicable. 
+
 39.2 La relación y graduación de las faltas del artículo 41 de este convenio colectivo es meramente enunciativa. La 
 Empresa procederá a la valoración de las faltas y de las correspondientes sanciones, teniendo en cuenta todos 
 los elementos objetivos y subjetivos que permitan valorar la empresa del resultado lesivo y apreciar la existencia 
@@ -2081,6 +2130,7 @@ como violencia en el trabajo, a cualquier trabajador, así como a la ciudadanía
 de trabajo o fuera de ellos durante la prestación de sus servicios. 
 9. La violación de la imparcialidad, utilizando las facultades atribuidas para influir en procesos electorales de 
 cualquier naturaleza y ámbito. 
+
 10. La embriaguez y/o encontrarse bajo los efectos de otras sustancias estupefacientes de forma habitual en el 
 trabajo. 
 11. El abandono del centro o puesto de trabajo, sin causa o motivo justificado, aún por breve tiempo siempre que 
@@ -2173,17 +2223,22 @@ d) Se podrán adoptar, mediante resolución motivada, medidas de carácter provi
 de la resolución final que pudiera recaer. La suspensión provisional como medida cautelar en la tramitación 
 de un expediente disciplinario no podrá exceder de 6 meses, salvo en caso de paralización del procedimiento 
 imputable a la persona interesada. 
+
 e) La suspensión provisional podrá acordarse también durante la tramitación de un procedimiento judicial, y se 
 mantendrá por el tiempo a que se extienda la prisión provisional u otras medidas decretadas por el juez o la 
 jueza que determinen la imposibilidad de desempeñar el puesto de trabajo. 
+
 f) El trabajador en suspensión provisional tendrá derecho a percibir durante la suspensión las retribuciones 
 básicas y, en su caso, las prestaciones familiares por descendiente a su cargo. 
+
 g) Cuando la suspensión provisional se eleve a definitiva, el personal laboral deberá devolver lo percibido durante 
 el tiempo de duración de aquélla. Si la suspensión provisional no llegara a convertirse en sanción definitiva, 
 la Empresa deberá restituir a la persona suspendida provisionalmente la diferencia entre los haberes 
 realmente percibidos y los que hubiera debido percibir si se hubiera encontrado con plenitud de derechos. 
+
 h) El tiempo de permanencia en suspensión provisional se descontará para el cumplimiento de la suspensión 
 firme. 
+
 i) Cuando la suspensión no sea declarada firme, el tiempo de duración de la misma se computará como de 
 servicio activo, debiendo acordarse la inmediata reincorporación del trabajador a su puesto de trabajo, con 
 reconocimiento de todos los derechos económicos y demás que procedan desde la fecha de suspensión. 
@@ -2195,6 +2250,7 @@ sección sindical, Comité de Empresa o central sindical, según proceda, a fin 
 la tramitación del procedimiento. Dicha notificación deberá, asimismo, realizarse cuando la incoación del 
 expediente se practique dentro del año siguiente al cese de la persona inculpada. También deberá efectuarse 
 si la persona inculpada estuviese en una candidatura durante el período electoral. 
+
 k) En todo caso, el plazo de caducidad de los procedimientos disciplinarios será de doce meses, sin perjuicio de 
 la posibilidad de incoación de un nuevo procedimiento disciplinario en los supuestos en que no hubiese 
 prescrito la falta. Asimismo, se producirá la caducidad si el expediente permaneciese paralizado durante más 
@@ -2276,15 +2332,15 @@ cometida de forma voluntaria o dolosa.
 Art. 49 – 
 Multas de tráfico. 
 
-49.1 Serán responsabilidad de la empresa Ias multas y sanciones motivadas por carecer los vehículos de su propiedad 
+49.1 Serán responsabilidad de la empresa las multas y sanciones motivadas por carecer los vehículos de su propiedad 
 de Ias autorizaciones previstas en Ias leyes de tráfico y por autorizar la conducción de vehículos que incumplan 
 Ias condiciones técnicas que garantizan la seguridad vial. 
+
 49.2 Las multas impuestas por la autoridad municipal, gubernativa o judicial al personal durante el desarrollo de su 
 labor profesional y con vehículos de la empresa por infracción de las disposiciones del código de circulación, serán 
 abonadas al cien (100) % por la empresa, si es por indicación de la empresa, y 50% si es por equivocación de la 
 persona trabajadora, salvo reincidencia en un periodo no superior al año, que en este caso serán abonadas en 
 su totalidad por el trabajador. 
-
 49.3 Cuando las autoridades requieran de la empresa información relativa al trabajador denunciado, ésta remitirá 
 comunicación de tal requerimiento al trabajador afectado en el plazo de veinticuatro horas. 
 49.4 La empresa, previa petición del trabajador, se compromete a realizar los recursos en vía administrativa que 
@@ -2313,6 +2369,7 @@ trabajadores.
 50.1 Se reconoce al Comité de Empresa, como órgano representativo unitario y colegiado del conjunto de 
 trabajadores y trabajadoras de la Empresa, capacidad para la defensa de sus intereses en todo lo relativo al 
 ámbito de sus competencias, por decisión mayoritaria de sus integrantes. 
+
 50.2 El Comité de Empresa con la representación proporcional que tengan en dicho órgano unitario, tendrán los 
 derechos que se le reconozcan legalmente, entre los que se contempla el derecho a la negociación colectiva en 
 los términos establecidos en su legislación específica. 
@@ -2442,6 +2499,7 @@ Regulación del uso y comunicación de horas sindicales.
 53.1 Los representantes de los trabajadores comunicarán a RR.HH. con copia al Responsable del Departamento la 
 utilización del crédito horario por actividad representativa, con carácter general con dos días de antelación y en 
 todo caso, el día anterior al de su uso y antes de las 12:00 horas. 
+
 53.2 En caso de circunstancia urgente sobrevenida, los representantes de los trabajadores podrán comunicar a la 
 mayor brevedad posible, la utilización del crédito horario por actividad representativa más allá de las 12:00 horas 
 del día anterior al de su uso. El representante comunicará telefónicamente al Director de RR.HH. y al director 
@@ -2476,7 +2534,6 @@ a los soportes electrónicos que se establezcan a tal efecto por la Empresa para
 
 Art. 56 – 
 Derecho de reunión y asambleas de los trabajadores. 
-
 56.1 El lugar de reunión podrá ser en el centro de trabajo. 
 56.2 Quienes convoquen las asambleas velarán por el normal desarrollo de la asamblea, que se respete el orden del 
 día comunicado y que no asistan otras personas distintas al personal laboral de la Empresa o que, en caso de 
@@ -2517,6 +2574,7 @@ colectivo.
 puesto de trabajo anual (14 pagas), complemento de transporte anual (12 pagas) y la ayuda por hijo con 
 discapacidad (14 pagas), correspondiente a ese grupo profesional dividido entre el número de horas anuales 
 según convenio colectivo o legalmente establecida. 
+
 59.3 El día de trabajo será el resultado del cálculo de la suma del importe del salario base mensual, el complemento 
 puesto de trabajo mensual, el plus de transporte mensual y la ayuda por hijo con discapacidad, todo ello dividido 
 por 30 días. 
@@ -2603,13 +2661,13 @@ realizadas entre las diez de la noche y las seis de la mañana o diurnas en domi
 (100%) del valor de una hora ordinaria de trabajo para las realizadas por causas de fuerza mayor. 
 Tipo de Hora Extraordinaria Horario 
 En días de lunes a sábados, porcentaje de incremento sobre la hora normal, en día normal
-- Diurno 25%
-- Nocturno 50%
+- Diurno 25%.
+- Nocturno 50%.
 En día domingo, festivos y nocturnos. Porcentaje de incremento sobre la hora normal, en día normal:
-- Diurno 50% 
-- Nocturno 50% 50% 
+- Diurno 50%. 
+- Nocturno 50% 50%.
 Cualquier día, por fuerza mayor, el porcentaje de incremento sobre la hora normal:
--Diurno/nocturno 100% 100% 
+-Diurno/nocturno 100% 100%. 
 
 64.8 La fracción de hora extra será por cuartos de hora, redondeando por exceso toda fracción que supere los quince 
 (15) minutos al cuarto siguiente. 
@@ -2617,14 +2675,14 @@ Cualquier día, por fuerza mayor, el porcentaje de incremento sobre la hora norm
 extraordinarias en tiempo de descanso. Para realizar el cálculo del tiempo a compensar, se tomará como 
 referencia la siguiente tabla. 
 En días de lunes a sábados, tiempo de compensación sobre la hora normal:
-- Diurno: 1:30 horas
-- Nocturno: 2 horas
+- Diurno: 1:30 horas.
+- Nocturno: 2 horas.
 En día domingo, festivos y nocturnos.Tiempo decompensación sobre la hora normal:
-- Diurno: 2 horas
-- Nocturno: 2 horas
+- Diurno: 2 horas.
+- Nocturno: 2 horas.
 De fuerza mayor:
-- Diurno: 2:30 horas
-- Nocturno: 2:30 horas
+- Diurno: 2:30 horas.
+- Nocturno: 2:30 horas.
 
 64.10 Para el personal que desarrolla su labor en departamentos donde no sea de aplicación el sistema de turnos, el 
 trabajo en sábados, domingos y festivos tendrán la consideración de horas extraordinarias y se llevará a cabo 
@@ -2669,14 +2727,14 @@ Viernes Piñata 16:00 – 24:00.
 Sábado Piñata 00:00 – 08:00 / 12:00 -24:00.
 Domingo Piñata 00:00 – 08:00 / 16:00 -25:00. 
 DÍA DE CARNAVAL (Personal de Mantenimiento), FRANJA HORARIA:
-Viernes Cabalgata 16:00 – 24:00 
-Primer Sábado 00:00 – 24:00 
-Primer Domingo 00:00 – 24:00 
-Lunes de Carnaval 16:00 – 24:00 
-Martes de Carnaval 00:00 – 24:00 
-Viernes Piñata 16:00 – 24:00 
-Sábado Piñata 00:00 – 24:00 
-Domingo Piñata 00:00 – 24:00 
+Viernes Cabalgata 16:00 – 24:00. 
+Primer Sábado 00:00 – 24:00. 
+Primer Domingo 00:00 – 24:00. 
+Lunes de Carnaval 16:00 – 24:00. 
+Martes de Carnaval 00:00 – 24:00. 
+Viernes Piñata 16:00 – 24:00. 
+Sábado Piñata 00:00 – 24:00. 
+Domingo Piñata 00:00 – 24:00. 
 
 65.6 Servicios Especiales de Navidad: 
 • La hora de los servicios especiales de Navidad para Conducción, Fiscalización y Ventas, Mantenimiento y 
@@ -2685,7 +2743,7 @@ de la siguiente manera:
 • El importe de una hora extra nocturna/festiva, que coincida con los horarios de las franjas horarias establecidas, 
 se multiplica por 7,5 horas, se le suma el valor del Día de Trabajo, según grupo profesional, y el resultado se 
 divide entre 7,5. 
-Hora de trabajo de Navidad = (Hora extra nocturna/festiva ∗ 7,5 horas) + Día de trabajo / 7,5 = €
+Hora de trabajo de Navidad = (Hora extra nocturna/festiva ∗ 7,5 horas) + Día de trabajo / 7,5 = €.
 
 65.7 La tabla de días y franjas horarias para los servicios especiales de Navidad son los siguientes: 
 DÍAS DE NAVIDAD FRANJA HORARIA:
@@ -2741,6 +2799,7 @@ Pagas extraordinarias.
 66.1 Se establecen dos (2) pagas extraordinarias anuales, la de verano y la de Navidad. Su abono será el quince (15) 
 de junio para la primera y el quince (15) de diciembre para la segunda, si estos días coincidieran con domingo se 
 realizará el día laborable anterior. 
+
 66.2 El importe de cada una de las pagas extraordinarias reglamentarias, será la suma del valor mensual del salario 
 base, la antigüedad, el complemento del puesto de trabajo y la ayuda por hijo con discapacidad. 
 66.3 El devengo será anual y a efectos de cálculo de aquellos trabajadores que no hayan permanecido el año 
@@ -3065,7 +3124,6 @@ De acuerdo a lo establecido en el artículo 3 de este convenio colectivo su entr
 de su firma. A efectos del abono de los atrasos correspondientes, estos empezarán a contarse desde el 1 de 
 enero de 2019. Estos atrasos se abonarán en la nómina siguiente a la firma del Convenio Colectivo. El desglose 
 de estos atrasos se le informará individualmente a cada trabajador junto con su nómina. 
-
 Con efectos del mes de mayo de 2019 y como consecuencia de los acuerdos alcanzados tras la finalización del 
 período de huelga, se abonaron los atrasos correspondientes al año 2018 
 

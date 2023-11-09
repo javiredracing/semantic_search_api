@@ -41,7 +41,7 @@ PREFIX_QUERY = "query: "
 INPUT_FORMATS_FITZ = ["pdf", "xps", "epub", "mobi", "fb2", "cbz", "svg"]
 VALID_FORMATS = ["txt"]
 #https://github.com/deepset-ai/haystack/tree/main/rest_api
-TRANSFORMER = "intfloat/multilingual-e5-base"
+TRANSFORMER = "intfloat/multilingual-e5-small"
 #TRANSFORMER = "mrm8488/distiluse-base-multilingual-cased-v2-finetuned-stsb_multi_mt-es"
 model = SentenceTransformer(TRANSFORMER)
 #print(model)
@@ -79,7 +79,7 @@ retriever1 = EmbeddingRetriever(
     scale_score=True,
 )
 retriever2 = BM25Retriever(document_store=document_store)
-reader = FARMReader("MMG/bert-base-spanish-wwm-cased-finetuned-spa-squad2-es-finetuned-sqac", use_gpu=True) 
+reader = FARMReader("MMG/bert-base-spanish-wwm-cased-finetuned-spa-squad2-es-finetuned-sqac", use_gpu=True, context_window_size=3000) 
 #PlanTL-GOB-ES/roberta-large-bne-sqac
   
 class RequestBaseModel(BaseModel):
@@ -107,6 +107,7 @@ class SearchQueryParam(FilterRequest):
     query:str = Field(title="Query max length 512 chars", max_length=512)
     #max_text_len:int = Field(default=1000 ,gt=0, le=1500, description="Max length of results text")
     top_k:int = Field(default=5,gt=0, le=50, description="Number of search results")
+    context_size:int = Field(default=0,ge=0, le=20, description="Number paragrhaps in context")
     
 class AskQueryParams(SearchQueryParam):
     top_k_answers:int = Field(default=2,gt=0, le=50, description="Number of ask results")
@@ -253,6 +254,28 @@ def searchInDocstore(params):
     #print_documents(prediction, max_text_len=query.max_text_len, print_name=True, print_meta=True)
     return prediction
 
+def getContext(docs, context_size):
+     if context_size > 0:
+        for doc in docs:            
+            currentParagraph = doc["meta"]["paragraph"]
+            min_paragrah = currentParagraph - context_size
+            if min_paragrah < 0:
+                min_paragrah = 0
+            min_paragrah = list(range(min_paragrah,currentParagraph))
+            max_paragraph = list(range(currentParagraph + 1, currentParagraph + context_size + 1))
+            context_list = min_paragrah + max_paragraph
+            getDocuments = document_store.get_all_documents(filters={"name":doc["meta"]["name"], "paragraph": context_list}, return_embedding=False)
+            #print(getDocuments)
+            doc["before_context"] = []
+            doc["after_context"] = []
+            for context in getDocuments:
+                if context.meta["paragraph"] < currentParagraph:
+                    doc["before_context"].append(context.content)
+                else:
+                    doc["after_context"].append(context.content)
+                    
+     return docs
+    
 @app.get("/")
 def main():
     content = """
@@ -276,7 +299,8 @@ def check_status():
 def search_document(params:Annotated[SearchQueryParam, Body(embed=True)]):
     """
     This endpoint receives the question as a string and allows the requester to set
-    additional parameters that will be passed on to the system to get a set of most relevant document pieces
+    additional parameters that will be passed on to the system to get a set of most relevant document pieces.
+    Depending on the context size, it return previous and later paragraphs from documents
     
     Filter example:
     
@@ -294,9 +318,14 @@ def search_document(params:Annotated[SearchQueryParam, Body(embed=True)]):
     }
     }}`
     """
-    return searchInDocstore(params)
-
+    docs = searchInDocstore(params)
+    result = []
+    for doc in docs:
+        result.append(doc.to_dict())    
+    docs_context = getContext(result, params.context_size)
     
+    return docs_context
+
 @app.post("/ask/", tags=["search"])
 def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     """
@@ -319,6 +348,7 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     }
     }}`
     """
+   
     myDocs = searchInDocstore(params)
     for doc in myDocs:
         doc.content = doc.content.replace('\r\n', '')
@@ -335,8 +365,12 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
                 if doc.id == id:
                     answer.meta.update(doc.meta)
                     break
-    #print_answers(result, details="all") 
-    return result
+
+    anwsers = []
+    for doc in result['answers']:
+        anwsers.append(doc.to_dict())    
+    docs_context = getContext(anwsers, params.context_size)
+    return docs_context    
    
 @app.post("/documents/show/", tags=["docs"])
 def show_documents(filters: FilterRequest, index: Optional[str] = None):
@@ -424,7 +458,7 @@ def delete_documents(filters: FilterRequest, index: Optional[str] = None):
     return True
 
 @app.post("/documents/upload/", tags=["docs"])
-def upload_documents(files: Annotated[List[UploadFile], File(description="TXT files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(None) , force_update:Annotated[bool, Form(description="Remove older files")] = True, parse_doc:Annotated[bool, Form(description="Parse doc in paragrahps")] = True, header: Annotated[int,Form(description="Header lines to remove")] = 0, footer: Annotated[int, Form(description="Footer lines to remove")] = 0):
+def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(None) , force_update:Annotated[bool, Form(description="Remove older files")] = True, parse_doc:Annotated[bool, Form(description="Parse doc in paragrahps")] = True, header: Annotated[int,Form(description="Header lines to remove")] = 0, footer: Annotated[int, Form(description="Footer lines to remove")] = 0):
 #def upload_documents(files: Annotated[List[UploadFile], File()], metadata: InputParams = Body(...)):
     """
     This endpoint accepts documents in .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg and .txt format at this time. It only can be parsed by "\\n" character.
@@ -435,7 +469,7 @@ def upload_documents(files: Annotated[List[UploadFile], File(description="TXT fi
     """
     #
     #https://stackoverflow.com/questions/63110848/how-do-i-send-list-of-dictionary-as-body-parameter-together-with-files-in-fastap
-    
+    print("Force_update",force_update)
 
     background_tasks.add_task(document_manager, files, metadata.metadata, force_update, parse_doc, header, footer)
 

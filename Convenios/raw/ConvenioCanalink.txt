@@ -1130,7 +1130,6 @@ dado su carácter excepcional y puntual, nunca permanente, acordándose
 establecer un límite máximo anual en todo caso inferior a 160 horas. 
 
 Compensaciones: 
-
 Será de aplicación lo recogido en este apartado, siempre y cuando se 
 cumpla lo establecido en las Bases de Ejecución del Presupuesto de la 
 Corporación Insular para cada ejercicio. 
@@ -1216,9 +1215,7 @@ establecida anteriormente, el número máximo anual de horas extraordinarias se
 reducirá en la misma proporción que exista entre tales jornadas. 
 
 Cálculo hora extraordinaria: 
-
 Las horas realizadas se abonarán según la siguiente fórmula 
-
 a. Retribuciones fijas ordinarias correspondientes del 
 trabajador, incluido el complemento funcional que se pudiera estar 
 percibiendo en el momento de la realización de las horas 
@@ -1305,7 +1302,6 @@ elección del trabajador o trabajadora y condicionado a las necesidades del
 servicio, en supuestos de discrepancia entre trabajadores y trabajadoras de un 
 mismo departamento, estas se resolverán atendiendo a los siguientes criterios 
 y por este orden de prelación: 
-
 1) Familiares dependientes (hijos o hijas en edad escolar hasta los 16 años o 
 con discapacidad acreditada o situación de necesidad respecto de un 
 familiar a su cargo). 
@@ -1518,7 +1514,6 @@ Artículo 25.- Suspensión del Contrato de Trabajo
 
 Las personas trabajadoras tendrán derecho a la suspensión del contrato 
 de trabajo por las causas las siguientes causas: 
-
 a) Mutuo acuerdo de las partes. 
 b) Las consignadas válidamente en el contrato. 
 c) Incapacidad temporal de los trabajadores. 
@@ -1895,7 +1890,6 @@ edad ordinaria de jubilación de conformidad con el sistema de seguridad social;
 se abonará en un único pago, las siguientes mensualidades según cuantía de 
 las retribuciones ordinarias recogidas en Convenio Colectivo, según la siguiente 
 escala: 
-
  Entre 10 y 15 años: 2 mensualidades de retribuciones ordinarias 
  Entre 16 y 20 años: 3 mensualidades de retribuciones ordinarias 
  Entre 21 y 30 años: 4 mensualidades de retribuciones ordinarias 
@@ -2035,7 +2029,6 @@ perjuicio de lo dispuesto en la legislación general, se establece con carácter
 general o similar el siguiente cuadro de infracciones laborales: 
 
 Son faltas leves: 
-
 a) La no comunicación, con veinticuatro horas de antelación de la falta al 
 trabajo por causa justificada, a no ser que se pruebe la imposibilidad de 
 realizarla. 
@@ -2054,7 +2047,6 @@ puesto a desempeñar.
 
 
 Son faltas graves: 
-
 a) La falta de disciplina en el trabajo o del respeto debido a los compañeros, 
 a los miembros y representantes de la Empresa. 
 b) El incumplimiento de las órdenes o instrucciones de los superiores y de 
@@ -2085,6 +2077,7 @@ individual, en su caso, y documentos.
 j) No guardar el debido sigilo respecto de los asuntos que se conozcan por 
 razón del trabajo, cuando causen perjuicio con carácter general a la 
 Empresa o se utilicen en provecho propio. 
+
 k) La reincidencia en la comisión de faltas leves, aunque sean de distinta 
 naturaleza, dentro de un periodo de cuatro meses, cuando hayan 
 mediado sanciones o advertencias escritas. 
@@ -2112,10 +2105,8 @@ injustificados de la jornada de trabajo.
 
 
 Son faltas muy graves: 
-
 Además de las contenidas en el artículo 54 del Texto Refundido de la Ley 
 del Estatuto de los Trabajadores, las siguientes: 
-
 a) El fraude, la deslealtad y el abuso de confianza en las gestiones 
 encomendadas, así como cualquier conducta dolosa que causen 
 perjuicio grave. 
@@ -2150,6 +2141,7 @@ o) Los actos limitativos de la libre expresión del pensamiento de las ideas y
 de las opiniones. 
 p) Atentar contra el derecho al honor, a la intimidad personal y familiar y a 
 la propia imagen de cualquier persona trabajadora de la Empresa. 
+
 q) La realización de una segunda actividad sin haber solicitado y obtenido 
 previamente por parte de la Dirección de la Empresa, la correspondiente 
 declaración de compatibilidad y sin haber tramitado el correspondiente 
@@ -2201,7 +2193,6 @@ Las sanciones que la Empresa puede aplicar, según la gravedad y
 circunstancias de las faltas cometidas, serán las siguientes. 
 
 Para las faltas leves: 
-
 a) Apercibimiento escrito. 
 b) Suspensión de empleo y sueldo de uno a cinco días. 
 
@@ -2209,14 +2200,12 @@ b) Suspensión de empleo y sueldo de uno a cinco días.
 
 
 Para las faltas graves: 
-
 c) Suspensión de empleo y sueldo de seis días hasta dos meses. 
 
 
 
 
 Para faltas muy graves: 
-
 d) Suspensión de empleo y sueldo de dos meses y un día hasta seis meses. 
 e) Demérito que consistirá en la penalización a efectos de carrera, 
 promoción o movilidad voluntaria. 
@@ -2334,6 +2323,7 @@ efectivos y desempeño en tales condiciones. Dichas retribuciones
 complementarias variables son: complemento de guardia semanal de 
 operaciones, complemento de especial dedicación, pernoctación y 
 complemento de supervisión/coordinación 
+
 2.1. Complemento de guardia semanal de operaciones: La persona 
 trabajadora percibirá una retribución económica establecida en el Anexo 
 III, en concepto de disponibilidad por cada semana efectiva en la que 
@@ -2349,6 +2339,7 @@ semana concreta de que se trate y siempre y cuando sea asignado por
 
 la empresa para los trabajos vinculados a la necesidad operativa de la 
 empresa en cuanto a labores de operación y mantenimiento. 
+
 2.2. Complemento de especial dedicación: Se fija para compensar las 
 singulares características de determinados puestos de trabajo que 
 requieren disponibilidad y/o localización (ingeniería y desarrollo de 
@@ -2370,6 +2361,7 @@ situación localizable o de presencia física que se retribuye. El importe
 mensual o la parte proporcional que corresponda al tiempo de especial 
 dedicación fuera de la jornada de trabajo es el establecido en el Anexo 
 III del presente Convenio Colectivo 
+
 2.3. Complemento de Supervisión/Coordinación de Proyectos: Se fija 
 para compensar las funciones añadidas de organización y/o 
 coordinación de proyectos y sobre personal, no propias de su plaza, bien 
@@ -2382,6 +2374,7 @@ cualquier caso, estará vinculado al desempeño efectivo de la
 supervisión / coordinación encomendada/ y solo se percibirá mientras 
 dure tal asignación. El importe mensual se establece en el Anexo III por 
 el tiempo que proceda la asignación del mismo o parte proporcional. 
+
 2.4. Pernoctación: Este complemento, que tendrá carácter salarial, será 
 percibido, exclusivamente, por aquellas personas trabajadoras que, en 
 cumplimiento de sus obligaciones, realizan una jornada especial y que 
@@ -2412,6 +2405,7 @@ retribuidos. El personal relacionado con ventas podrá incrementar la
 productividad máxima hasta un 20% en proporción al cumplimiento de 
 objetivos directamente vinculados a la consecución de incremento en 
 ventas. 
+
 4. Complemento funcional 
 4.1. Complementos funcionales de Dirección: Estos complementos 
 estarán vinculados a las categorías a extinguir de Directores que hayan 
@@ -2423,10 +2417,6 @@ hasta el nivel retributivo de las actuales direcciones. Todo ello sin
 perjuicio del personal de alta dirección que pudiera seleccionarse y 
 ocuparse que está excluido de la aplicación del presente convenio 
 colectivo tal y como se establece en el artículo 1 del presente texto legal. 
-
-
-
-
 Este complemento, que tiene carácter salarial y no consolidable, 
 retribuye por la realización de las funciones añadidas de Dirección, por 
 lo que la persona trabajadora solamente lo percibirá mientras realice 
@@ -2496,9 +2486,7 @@ empleados de la entidad una compensación por la retirada de los servicios
 de comedor que disfrutaban anteriormente como retribución en especie y 
 ahora pasan a percibir como complemento económico de 2087,80 € que 
 se percibirá en 12 mensualidades por los empleados presentes y futuros. 
-
-
- En ningún caso, dicho complemento será objeto de actualización 
+En ningún caso, dicho complemento será objeto de actualización 
 retributiva. 
 
 Artículo 44.- Indemnización por Razón de Servicio 
@@ -2523,11 +2511,9 @@ tendrán derecho a una ayuda económica de naturaleza indemnizatoria en los
 términos y condiciones siguientes: 
 
 A. Requisitos: 
-
 a) Comunicación escrita de los hechos al área de Recursos 
 Humanos en el plazo máximo de diez días naturales, contados a partir del día 
 siguiente a aquel en que se produjo el daño. 
-
 b) Atestado relativo al siniestro, elaborado por miembros de la 
 Agrupación de Tráfico de la Guardia Civil, Policía Local, o personal encargado 
 de la conservación o mantenimiento viario o denuncia ante la autoridad, donde 
@@ -2535,27 +2521,21 @@ consten como mínimo los siguientes extremos: identificación del vehículo, del
 conductor o conductora, lugar, fecha y hora de acaecimiento del evento lesivo, 
 circunstancias que concurrieron y descripción de los daños que se aprecian en 
 el vehículo siniestrado. 
-
 c) Informe del superior jerárquico donde se acredite que el lugar, 
 fecha y hora del accidente, se corresponde con la actividad laboral 
 encomendada. 
-
 d) Certificado de la Compañía Aseguradora del vehículo, acreditando 
 que ninguna de las Aseguradoras intervinientes en el siniestro tienen la 
 obligación de asumir dichos daños. 
-
 e) Informe pericial relativo a la cuantía de los daños ocasionados y 
 relación causa-efecto de los mismos con el accidente. 
-
 f) Declaración responsable del trabajador o trabajadora de no haber 
 sido indemnizado, ni encontrarse en trámites de serlo, por compañía o 
 mutualidad de seguros o por cualquier Administración Pública. 
-
 g) Factura de la reparación efectuada, que deberá contener los datos 
 y requisitos establecidos legalmente. 
 
 B. Importe de la ayuda: 
-
 La cuantía en concepto de ayuda será equivalente al importe de los 
 daños que se especifiquen en el informe pericial, a que se refiere la letra e) del 
 apartado A. anterior, salvo que el importe de la factura de reparación aportada 
@@ -2567,19 +2547,16 @@ mencionado valor venal.
 C. Exclusiones: 
 
 No procederá la concesión de ayuda alguna en los siguientes supuestos: 
-
 
 a) Accidentes acaecidos al ir o al volver de su domicilio al lugar de 
 trabajo, tanto al comienzo como a la terminación de la jornada laboral, 
 respectivamente; salvo cuando, por razón de servicio, el desplazamiento se 
 realice, directamente desde su domicilio a centros de trabajo distinto al habitual, 
 móviles o itinerantes y viceversa. 
-
 b) Cuando de la documentación aportada se constate que el 
 trabajador o trabajadora estuviera bajo los efectos del alcohol u otras 
 sustancias, o concurriera cualquier otra circunstancia constitutiva de 
 imprudencia temeraria imputable al trabajador/a. 
-
 c) Cuando el trabajador o trabajadora tenga derecho a percibir, por 
 cualquier otro título, el importe de los daños ocasionados en su vehículo. 
 
@@ -2827,7 +2804,6 @@ partir del Curso Académico 2023/2024.
 
 
 Plazo y documentación a aportar. 
-
 A. Anualmente, desde el 1 de junio al 15 de septiembre los titulares del 
 derecho deberán solicitar la ayuda mediante impreso existente al efecto, en el 
 que se hará constar: nombre y apellidos del educando, relación que le une al 
@@ -2870,33 +2846,26 @@ En los casos de separación legal o divorcio: copia compulsada de la
 sentencia judicial. 
 
 Abono de la ayuda. 
-
 A) Con carácter general, la prestación se abonará de una sola vez 
-
 B) Cuando las solicitudes se hayan presentado dentro del plazo señalado 
 en este acuerdo, la ayuda se percibirá, mediante su inclusión en las nóminas 
-
 
 de octubre a diciembre, en función del orden y fecha de presentación de las 
 solicitudes. 
-
 C) En el supuesto de matrimonio o convivencia de dos personas con 
 derecho a la ayuda en calidad de titulares, sólo podrá percibir la ayuda 
 correspondiente por su/s beneficiario/s, uno de los titulares. 
 
 Pérdida de la ayuda. 
-
 Cualquier falsedad comprobada en la documentación, alegaciones o 
 declaraciones del titular o beneficiario, será motivo suficiente para la pérdida 
 definitiva del derecho a la ayuda, debiéndose reintegrar las cantidades cuyo 
 percibo se halla declarado indebido, sin perjuicio de las actuaciones a que 
 hubiere lugar. 
-
 A tal efecto, la Empresa se reserva el derecho a requerir en cualquier 
 momento la documentación complementaria que estime necesaria. 
 
 Informe a la RLPT 
-
 Asimismo, la empresa informará a la RLPT de las solicitudes 
 presentadas, de los criterios establecidos y de las ayudas concedidas en este 
 apartado. 

@@ -97,7 +97,6 @@ provincia donde radique su puerto de base.
 Artículo 2. Relaciones laborales de carácter especial.
 
 1. Se considerarán relaciones laborales de carácter especial:
-
 a) La del personal de alta dirección no incluido en el 
 artículo 1.3.c).
 b) La del servicio del hogar familiar.
@@ -177,8 +176,6 @@ Artículo 4. Derechos laborales.
 y alcance que para cada uno de los mismos disponga 
 su específica normativa, los de:
 a) Trabajo y libre elección de profesión u oficio.
-
-
 
 b) Libre sindicación.
 c) Negociación colectiva.
@@ -264,8 +261,6 @@ deberá constar por escrito y para actos determinados.
 Artículo 7. Capacidad para contratar.
 
 Podrán contratar la prestación de su trabajo:
-
-
 
 a) Quienes tengan plena capacidad de obrar conforme a 
 lo dispuesto en el Código Civil.
@@ -295,17 +290,14 @@ tiempo parcial, fijos-discontinuos y de relevo y los contratos
 para la realización de una obra o servicio determinado; también 
 constarán por escrito los contratos por tiempo determinado 
 cuya duración sea superior a cuatro semanas.
-
 Deberán constar igualmente por escrito los contratos de 
 trabajo de los pescadores, de los trabajadores que trabajen 
 a distancia y de los trabajadores contratados en España al 
 servicio de empresas españolas en el extranjero.
-
 De no observarse la exigencia de forma escrita, el contrato de 
 trabajo se presumirá celebrado por tiempo indefinido y a jornada 
 completa, salvo prueba en contrario que acredite su naturaleza 
 temporal o el carácter a tiempo parcial de los servicios.
-
 Cualquiera de las partes podrá exigir que el contrato se formalice 
 por escrito, incluso durante el transcurso de la relación laboral.
 
@@ -938,15 +930,11 @@ efecto por renuncia del trabajador, mediante un preaviso
 de quince días, una vez cumplido un año desde su 
 celebración, cuando concurra alguna de las siguientes 
 circunstancias:
-
 1.ª La atención de las responsabilidades familiares 
 enunciadas en el artículo 37.6.
-
-
 
 2.ª Necesidades formativas, siempre que se acredite la 
 incompatibilidad horaria.
-
 3.ª Incompatibilidad con otro contrato a tiempo parcial.
 
 f) El pacto de horas complementarias y las condiciones de 
@@ -1019,7 +1007,6 @@ La relación laboral se extinguirá al producirse la jubilación
 total del trabajador.
 
 7. El contrato de relevo se ajustará a las siguientes reglas:
-
 a) Se celebrará con un trabajador en situación de desempleo 
 o que tuviese concertado con la empresa un contrato 
 de duración determinada.
@@ -1863,17 +1850,11 @@ Artículo 27. Salario mínimo interprofesional.
 sindicales y asociaciones empresariales más representativas, 
 anualmente, el salario mínimo interprofesional, teniendo en 
 cuenta:
-
 a) El índice de precios de consumo.
-
 b) La productividad media nacional alcanzada.
-
 c) El incremento de la participación del trabajo en la renta 
 nacional.
-
 d) La coyuntura económica general.
-
-
 
 Igualmente se fijará una revisión semestral para el caso de que 
 no se cumplan las previsiones sobre el índice de precios citado.
@@ -1968,8 +1949,6 @@ trámites y garantías establecidos en el artículo 49.2.
 realizarse y pagarse el negocio, la colocación o venta en que 
 hubiera intervenido el trabajador, liquidándose y pagándose, 
 salvo que se hubiese pactado otra cosa, al finalizar el año.
-
-
 
 El trabajador y sus representantes legales pueden pedir en 
 cualquier momento comunicaciones de la parte de los libros 
@@ -3044,14 +3023,11 @@ trabajo, siempre que este ocupe a más de cinco trabajadores,
 o cuando, sin afectar a la totalidad del centro de trabajo, 
 en un periodo de noventa días comprenda a un 
 número de trabajadores de, al menos:
-
 a) Diez trabajadores, en las empresas que ocupen menos 
 de cien trabajadores.
-
 b) El diez por ciento del número de trabajadores de la 
 empresa en aquellas que ocupen entre cien y trescientos 
 trabajadores.
-
 c) Treinta trabajadores en las empresas que ocupen más 
 de trescientos trabajadores.
 
@@ -3240,14 +3216,11 @@ unilateral del empresario de efectos colectivos.
 
 Se considera de carácter colectivo la modificación que, en 
 un periodo de noventa días, afecte al menos a:
-
 a) Diez trabajadores, en las empresas que ocupen menos 
 de cien trabajadores.
-
 b) El diez por ciento del número de trabajadores de la 
 empresa en aquellas que ocupen entre cien y trescientos 
 trabajadores.
-
 c) Treinta trabajadores, en las empresas que ocupen más 
 de trescientos trabajadores.
 
@@ -3423,8 +3396,6 @@ ampliación de su duración.
 
 Durante el periodo de consultas, las partes deberán negociar 
 de buena fe, con vistas a la consecución de un acuerdo. 
-
-
 
 Dicho acuerdo requerirá la conformidad de la mayoría de los 
 representantes legales de los trabajadores o, en su caso, de 
@@ -3747,9 +3718,6 @@ sentencia condenatoria.
 h) Suspensión de empleo y sueldo, por razones disciplinarias.
 i) Fuerza mayor temporal.
 j) Causas económicas, técnicas, organizativas o de producción.
-
-
-
 
 k) Excedencia forzosa.
 l) Ejercicio del derecho de huelga.
