@@ -14,7 +14,7 @@ from sentence_transformers import SentenceTransformer
 #from haystack.utils import print_answers
 import torch, os, io
 from datetime import datetime
-import fitz
+from lib.ProcessText import *
 import json
 
 tags_metadata = [
@@ -44,7 +44,7 @@ VALID_FORMATS = ["txt"]
 TRANSFORMER = "intfloat/multilingual-e5-small"
 #TRANSFORMER = "mrm8488/distiluse-base-multilingual-cased-v2-finetuned-stsb_multi_mt-es"
 model = SentenceTransformer(TRANSFORMER)
-#print(model)
+print(model)
 
 description = """
 Ask questions about the documents provided. 🚀
@@ -104,65 +104,26 @@ class InputParams(RequestBaseModel):
         return value
         
 class SearchQueryParam(FilterRequest):
-    query:str = Field(title="Query max length 512 chars", max_length=512)
+    query:str = Field(title="Query max length 512 chars", max_length=1500)
     #max_text_len:int = Field(default=1000 ,gt=0, le=1500, description="Max length of results text")
     top_k:int = Field(default=5,gt=0, le=50, description="Number of search results")
-    context_size:int = Field(default=0,ge=0, le=20, description="Number paragrhaps in context")
+    context_size:int = Field(default=0,ge=0, le=20, description="Number of paragrhaps in context")
     
 class AskQueryParams(SearchQueryParam):
     top_k_answers:int = Field(default=2,gt=0, le=50, description="Number of ask results")
 
-def remove_header_footer(text, header=0, footer=0):
-    text_splitted = text.splitlines()
-    result = ""
-    value = len(text_splitted)
-    if footer > 0:
-        value = -1 * footer
-    for line in text_splitted[header:value]:
-        result = result + line + "\r\n"
-    result = result + "\f\r\n"
-    return result
-    
-def readFile(file, header =0, footer=0):
-    text = file.file.read().decode("utf-8")
-    if header > 0 or footer > 0:
-        pages = text.split("\f")
-        text_formatted = ""
-        for page in pages:
-            text_formatted = text_formatted + remove_header_footer(page, header, footer)
-        return text_formatted
-    else:
-        return text
-    
-def readFileFitz(file, format, header, footer):
-    #TODO: https://towardsdatascience.com/extracting-text-from-pdf-files-with-python-a-comprehensive-guide-9fc4003d517
-    bytesFile = file.file.read()
-    doc = fitz.open(stream=bytesFile, filetype=format)
-    pdf_formatted = ""
-    for page in doc: # iterate the document pages
-        text = page.get_text()#.encode("utf8") # get plain text (is in UTF-8)
-        text = remove_header_footer(text, header, footer)
-        pdf_formatted = pdf_formatted + text
-    return pdf_formatted
-
-def document_manager(files, metadata, force_update, parse_doc, header, footer):
+def document_manager(files, metadata, force_update, parse_doc):
     docs = []
     for i,file in enumerate(files):
         nameParsed = file.filename.split(".")
-        if len(nameParsed) > 1:            
-            text = ""
-            if nameParsed[1].lower() in INPUT_FORMATS_FITZ:
-                text = readFileFitz(file, nameParsed[1].lower(), header, footer)
-            elif nameParsed[1].lower() in VALID_FORMATS:
-                text = readFile(file, header, footer)
-            else:
-                print("Error extension")
-                break
-                
+        if len(nameParsed) > 1:                           
+            text = ProcessText.readFile(file.file.read(),nameParsed[1])
+            if len(text) == 0:
+                return("error")
             splitted_text = []
             text_pages = []
             if parse_doc:
-                splitted_text, text_pages = processText(text)
+                splitted_text, text_pages = ProcessText.chunk_text(text)
             else:
                 splitted_text.append(text.strip())
                 text_pages.append(1)
@@ -177,40 +138,12 @@ def document_manager(files, metadata, force_update, parse_doc, header, footer):
                 docs = docs + generateEmbeddings(splitted_text, text_pages, file.filename, meta)
                 
         else:
-            print("error extension")
+            print("error extension1")
             #break
 
     if len(docs) > 0:    
         document_store.write_documents(docs)
-
-def processText(input):
-    '''
-    parse text by empty line. clean emtpy lines and whites in the end.
-    '''
-    text = ""
-    splitted_text = []
-    text_page = []
-    buf = io.StringIO(input)
-    file_content = buf.readlines()
-    page_counter = 1
-    for line in file_content:
-        #line = line.decode("utf-8")       
-        aux = line.strip()
-        if len(aux) == 0 :  #breakline
-            if len(text) > 0 and text.strip().endswith("."):
-                splitted_text.append(text.strip())                
-                text_page.append(page_counter)
-                text = ""
-            if "\f" in line:    #end of page
-                page_counter+=1
-            #continue
-        else:
-            if not aux.endswith(".") and not aux.endswith(":"):
-                line = aux + " "
-            text = text + line
-
-    return splitted_text, text_page
-    
+ 
 def generateEmbeddings(texts, pages, filename, metadata = None):
     docs = []
     if len(texts) > 0:
@@ -458,7 +391,7 @@ def delete_documents(filters: FilterRequest, index: Optional[str] = None):
     return True
 
 @app.post("/documents/upload/", tags=["docs"])
-def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(None) , force_update:Annotated[bool, Form(description="Remove older files")] = True, parse_doc:Annotated[bool, Form(description="Parse doc in paragrahps")] = True, header: Annotated[int,Form(description="Header lines to remove")] = 0, footer: Annotated[int, Form(description="Footer lines to remove")] = 0):
+def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(None) , force_update:Annotated[bool, Form(description="Remove older files")] = True, parse_doc:Annotated[bool, Form(description="Parse doc in paragrahps")] = True):
 #def upload_documents(files: Annotated[List[UploadFile], File()], metadata: InputParams = Body(...)):
     """
     This endpoint accepts documents in .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg and .txt format at this time. It only can be parsed by "\\n" character.
@@ -470,7 +403,6 @@ def upload_documents(files: Annotated[List[UploadFile], File(description="files"
     #
     #https://stackoverflow.com/questions/63110848/how-do-i-send-list-of-dictionary-as-body-parameter-together-with-files-in-fastap
     print("Force_update",force_update)
-
-    background_tasks.add_task(document_manager, files, metadata.metadata, force_update, parse_doc, header, footer)
+    background_tasks.add_task(document_manager, files, metadata.metadata, force_update, parse_doc)
 
     return {"message":"Files uploaded correctly, processing..." , "filenames": [file.filename for file in files]}
