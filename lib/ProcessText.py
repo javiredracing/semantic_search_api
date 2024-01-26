@@ -2,10 +2,13 @@ import fitz
 import os, io
 from thefuzz import fuzz
 
+from lib.ProcessMyPDF import *
+
 class ProcessText:
 
-    VALID_FORMATS_FITZ = ["pdf", "xps", "epub", "mobi", "fb2", "cbz", "svg"]
+    VALID_FORMATS_FITZ = ["xps", "epub", "mobi", "fb2", "cbz", "svg"]
     VALID_FORMATS = ["txt"]
+    PDF_FORMAT = ["pdf"]
     
     @staticmethod
     def check_if_header(pages):       
@@ -64,13 +67,16 @@ class ProcessText:
     @staticmethod
     def readFile(bytesFile, fileType):
         plain_text = ""                  
+        fileType = fileType.lower() 
         #bytesFile = file.file.read()            
-        if fileType.lower() in ProcessText.VALID_FORMATS_FITZ:
-            plain_text = ProcessText.readFileFitz(bytesFile, fileType.lower())
-        elif fileType.lower() in ProcessText.VALID_FORMATS:
+        if fileType in ProcessText.VALID_FORMATS_FITZ:
+            plain_text = ProcessText.readFileFitz(bytesFile, fileType)
+        elif fileType in ProcessText.VALID_FORMATS:
             plain_text = bytesFile.decode("utf-8")                
+        elif fileType in ProcessText.PDF_FORMAT:
+            plain_text = ProcessMyPDF.readPDF(bytesFile)
         else:
-            print("Error extension2")
+            print("Error extension")
             return plain_text
         txt_formatted = ProcessText.remove_header_footer(plain_text)
         return txt_formatted
@@ -79,6 +85,7 @@ class ProcessText:
     def readFileFitz(bytesFile, myformat):
         #TODO: https://towardsdatascience.com/extracting-text-from-pdf-files-with-python-a-comprehensive-guide-9fc4003d517
         doc = fitz.open(stream=bytesFile, filetype=myformat)
+        #doc = fitz.open(bytesFile, filetype=myformat)
         plain_text = ""
         for page in doc: 
             text = page.get_text()

@@ -38,10 +38,8 @@ tags_metadata = [
 
 PREFIX_PASSAGE = "passage: "
 PREFIX_QUERY = "query: "
-INPUT_FORMATS_FITZ = ["pdf", "xps", "epub", "mobi", "fb2", "cbz", "svg"]
-VALID_FORMATS = ["txt"]
 #https://github.com/deepset-ai/haystack/tree/main/rest_api
-TRANSFORMER = "intfloat/multilingual-e5-small"
+TRANSFORMER = "intfloat/multilingual-e5-base"
 #TRANSFORMER = "mrm8488/distiluse-base-multilingual-cased-v2-finetuned-stsb_multi_mt-es"
 model = SentenceTransformer(TRANSFORMER)
 print(model)
@@ -104,7 +102,7 @@ class InputParams(RequestBaseModel):
         return value
         
 class SearchQueryParam(FilterRequest):
-    query:str = Field(title="Query max length 512 chars", max_length=1500)
+    query:str = Field(title="Query max length 1500 chars", max_length=1500)
     #max_text_len:int = Field(default=1000 ,gt=0, le=1500, description="Max length of results text")
     top_k:int = Field(default=5,gt=0, le=50, description="Number of search results")
     context_size:int = Field(default=0,ge=0, le=20, description="Number of paragrhaps in context")
@@ -392,7 +390,6 @@ def delete_documents(filters: FilterRequest, index: Optional[str] = None):
 
 @app.post("/documents/upload/", tags=["docs"])
 def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(None) , force_update:Annotated[bool, Form(description="Remove older files")] = True, parse_doc:Annotated[bool, Form(description="Parse doc in paragrahps")] = True):
-#def upload_documents(files: Annotated[List[UploadFile], File()], metadata: InputParams = Body(...)):
     """
     This endpoint accepts documents in .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg and .txt format at this time. It only can be parsed by "\\n" character.
     
@@ -402,7 +399,6 @@ def upload_documents(files: Annotated[List[UploadFile], File(description="files"
     """
     #
     #https://stackoverflow.com/questions/63110848/how-do-i-send-list-of-dictionary-as-body-parameter-together-with-files-in-fastap
-    print("Force_update",force_update)
     background_tasks.add_task(document_manager, files, metadata.metadata, force_update, parse_doc)
 
     return {"message":"Files uploaded correctly, processing..." , "filenames": [file.filename for file in files]}
