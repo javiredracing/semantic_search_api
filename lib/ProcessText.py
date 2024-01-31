@@ -2,25 +2,26 @@ import fitz
 import os, io
 from thefuzz import fuzz
 
-from lib.ProcessMyPDF import *
+#from lib.ProcessMyPDF import *
 
 class ProcessText:
 
-    VALID_FORMATS_FITZ = ["xps", "epub", "mobi", "fb2", "cbz", "svg"]
+    VALID_FORMATS_FITZ = ["pdf","xps", "epub", "mobi", "fb2", "cbz", "svg"]
     VALID_FORMATS = ["txt"]
-    PDF_FORMAT = ["pdf"]
     
     @staticmethod
-    def check_if_header(pages):       
+    def check_if_header(pages):
+        print("pages", len(pages))
         if len(pages) > 1:    
             pages[0] = pages[0].strip()
             first_page = pages[0].splitlines()
+            print(first_page[0])
             for idx, line in enumerate(first_page): 
                 for s in pages[1:]:
                      s = s.strip()
                      next_page = s.splitlines()
                      #print("line: "+str(idx) + "|* page0*|: " + line + " |*page"+ "*|: "+ next_page[idx])
-                     if len(next_page) <= idx or fuzz.ratio(next_page[idx],line) < 90:                    
+                     if len(next_page) <= idx or fuzz.ratio(next_page[idx],line) < 90:
                         return idx
         return 0
         
@@ -44,6 +45,7 @@ class ProcessText:
     def remove_header_footer(text):
         '''Remove header and footer'''
         pages = text.split("\f")
+        #pages = [x for x in pages if len(x.strip())>0] #remove white slices
         header = ProcessText.check_if_header(pages)
         footer = ProcessText.check_if_footer(pages)
         if header > 0 or footer > 0:
@@ -60,7 +62,7 @@ class ProcessText:
                     text_formatted = text_formatted + line + "\r\n"                
                 text_formatted = text_formatted + "\f\r\n"
             
-            return text_formatted
+            return text_formatted.strip()
         else:
             return text
 
@@ -73,8 +75,8 @@ class ProcessText:
             plain_text = ProcessText.readFileFitz(bytesFile, fileType)
         elif fileType in ProcessText.VALID_FORMATS:
             plain_text = bytesFile.decode("utf-8")                
-        elif fileType in ProcessText.PDF_FORMAT:
-            plain_text = ProcessMyPDF.readPDF(bytesFile)
+        #elif fileType in ProcessText.PDF_FORMAT:
+        #    plain_text = ProcessMyPDF.readPDF(bytesFile)
         else:
             print("Error extension")
             return plain_text
@@ -85,15 +87,24 @@ class ProcessText:
     def readFileFitz(bytesFile, myformat):
         #TODO: https://towardsdatascience.com/extracting-text-from-pdf-files-with-python-a-comprehensive-guide-9fc4003d517
         doc = fitz.open(stream=bytesFile, filetype=myformat)
-        #doc = fitz.open(bytesFile, filetype=myformat)
         plain_text = ""
+        
         for page in doc: 
-            text = page.get_text()
-            text_splitted = text.splitlines()        
-            for line in text_splitted:
-                plain_text = plain_text + line + "\r\n"
+        
+            # for tab in page.find_tables():
+                # # process the content of table 'tab'
+                # page.add_redact_annot(tab.bbox)  # wrap table in a redaction annotation
+            # page.apply_redactions()  # erase all table text
+        
+            blocks = page.get_text("blocks",sort=True)
+            for block in blocks:
+                if block[6] == 0: #0 text, 1 image
+                    plain_text += block[4]  #4 = text
+                    item = block[4].rstrip()
+                    if len(item) > 0 and item[-1] in [".","?","!"]:
+                        plain_text += "\r\n"
             plain_text = plain_text + "\f\r\n"
-        return plain_text
+        return plain_text.strip()
     
     @staticmethod    
     def chunk_text(input):

@@ -39,7 +39,7 @@ tags_metadata = [
 PREFIX_PASSAGE = "passage: "
 PREFIX_QUERY = "query: "
 #https://github.com/deepset-ai/haystack/tree/main/rest_api
-TRANSFORMER = "intfloat/multilingual-e5-base"
+TRANSFORMER = "intfloat/multilingual-e5-small"
 #TRANSFORMER = "mrm8488/distiluse-base-multilingual-cased-v2-finetuned-stsb_multi_mt-es"
 model = SentenceTransformer(TRANSFORMER)
 print(model)
