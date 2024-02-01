@@ -110,24 +110,15 @@ class SearchQueryParam(FilterRequest):
 class AskQueryParams(SearchQueryParam):
     top_k_answers:int = Field(default=2,gt=0, le=50, description="Number of ask results")
 
-def document_manager(files, metadata, force_update, parse_doc):
+def document_manager(files, metadata, force_update):
     docs = []
     for i,file in enumerate(files):
         nameParsed = file.filename.split(".")
         if len(nameParsed) > 1:                           
-            text = ProcessText.readFile(file.file.read(),nameParsed[1])
-            if len(text) == 0:
-                return("error")
-            splitted_text = []
-            text_pages = []
-            if parse_doc:
-                splitted_text, text_pages = ProcessText.chunk_text(text)
+            splitted_text, text_pages = ProcessText.readFile(file.file.read(),nameParsed[1])
+            if len(splitted_text) == 0:
+                return("error")            
             else:
-                splitted_text.append(text.strip())
-                text_pages.append(1)
-            text = ""    
-
-            if len(splitted_text) > 0:
                 if force_update:
                     document_store.delete_documents(filters={'name': file.filename})
                 meta = None
@@ -160,6 +151,9 @@ def generateEmbeddings(texts, pages, filename, metadata = None):
                 currentMetadata.update(metadata)
             if len(pages) == len(texts):
                 currentMetadata.update({"page":pages[i]})
+            elif len(pages) == 1:
+                currentMetadata.update({"page":pages[0]})
+                
             docs.append(Document(content=row["content"], embedding=row["embedding"], content_type="text", meta=currentMetadata))
     return docs
     
@@ -389,7 +383,7 @@ def delete_documents(filters: FilterRequest, index: Optional[str] = None):
     return True
 
 @app.post("/documents/upload/", tags=["docs"])
-def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(None) , force_update:Annotated[bool, Form(description="Remove older files")] = True, parse_doc:Annotated[bool, Form(description="Parse doc in paragrahps")] = True):
+def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(None) , force_update:Annotated[bool, Form(description="Remove older files")] = True):
     """
     This endpoint accepts documents in .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg and .txt format at this time. It only can be parsed by "\\n" character.
     
@@ -399,6 +393,6 @@ def upload_documents(files: Annotated[List[UploadFile], File(description="files"
     """
     #
     #https://stackoverflow.com/questions/63110848/how-do-i-send-list-of-dictionary-as-body-parameter-together-with-files-in-fastap
-    background_tasks.add_task(document_manager, files, metadata.metadata, force_update, parse_doc)
+    background_tasks.add_task(document_manager, files, metadata.metadata, force_update)
 
     return {"message":"Files uploaded correctly, processing..." , "filenames": [file.filename for file in files]}

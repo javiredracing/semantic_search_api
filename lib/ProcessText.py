@@ -1,6 +1,8 @@
 import fitz
 import os, io
 from thefuzz import fuzz
+import pandas as pd
+from docx import Document as Document_Doc
 
 #from lib.ProcessMyPDF import *
 
@@ -8,6 +10,7 @@ class ProcessText:
 
     VALID_FORMATS_FITZ = ["pdf","xps", "epub", "mobi", "fb2", "cbz", "svg"]
     VALID_FORMATS = ["txt"]
+    DOCS_FORMAT = ["docx"]
     
     @staticmethod
     def check_if_header(pages):
@@ -68,34 +71,48 @@ class ProcessText:
 
     @staticmethod
     def readFile(bytesFile, fileType):
-        plain_text = ""                  
+        txt_formatted = ""                  
+        splitted_text = []
+        text_pages = []
+        
         fileType = fileType.lower() 
         #bytesFile = file.file.read()            
         if fileType in ProcessText.VALID_FORMATS_FITZ:
             plain_text = ProcessText.readFileFitz(bytesFile, fileType)
+            txt_formatted = ProcessText.remove_header_footer(plain_text)
+            splitted_text, text_pages = ProcessText.chunk_text(txt_formatted) #fix text 
+
         elif fileType in ProcessText.VALID_FORMATS:
-            plain_text = bytesFile.decode("utf-8")                
-        #elif fileType in ProcessText.PDF_FORMAT:
-        #    plain_text = ProcessMyPDF.readPDF(bytesFile)
+            plain_text = bytesFile.decode("utf-8").strip()
+            txt_formatted = ProcessText.remove_header_footer(plain_text)
+            splitted_text, text_pages = ProcessText.chunk_text(txt_formatted) #fix text 
+            
+        elif fileType in ProcessText.DOCS_FORMAT:
+            splitted_text = ProcessText.readFileDocx(bytesFile)
+            text_pages.append(1)    #docx hasn't got pages            
+            
         else:
             print("Error extension")
-            return plain_text
-        txt_formatted = ProcessText.remove_header_footer(plain_text)
-        return txt_formatted
+            #return txt_formatted
+        
+ 
+        #txt_formatted = ProcessText.remove_header_footer(plain_text)
+        return splitted_text, text_pages
                     
     @staticmethod        
     def readFileFitz(bytesFile, myformat):
         #TODO: https://towardsdatascience.com/extracting-text-from-pdf-files-with-python-a-comprehensive-guide-9fc4003d517
         doc = fitz.open(stream=bytesFile, filetype=myformat)
         plain_text = ""
-        
         for page in doc: 
-        
-            # for tab in page.find_tables():
+            
+            # tables=page.find_tables()
+            # for tab in page.find_tables(): 
                 # # process the content of table 'tab'
                 # page.add_redact_annot(tab.bbox)  # wrap table in a redaction annotation
+                
             # page.apply_redactions()  # erase all table text
-        
+            
             blocks = page.get_text("blocks",sort=True)
             for block in blocks:
                 if block[6] == 0: #0 text, 1 image
@@ -105,6 +122,38 @@ class ProcessText:
                         plain_text += "\r\n"
             plain_text = plain_text + "\f\r\n"
         return plain_text.strip()
+    
+    @staticmethod
+    def readFileDocx(bytesFile):
+        source_stream = io.BytesIO(bytesFile)
+        mydocument = Document_Doc(source_stream)
+        source_stream.close()       
+        #I = []
+        #plain_text = ""
+        
+        #paragraphs = mydocument.paragraphs
+        paragraphs = [x.text.strip() for x in mydocument.paragraphs]
+        #for i in range(len(paragraphs)):
+        #    plain_text += paragraphs[i].text.strip()
+        #    plain_text += "\r\n"
+            #if 'graphicData' in par[i]._p.xml:
+            #    I.append(i)
+        #print(I)
+        #return (plain_text,I)
+        #return plain_text.strip()
+        return paragraphs
+    
+    #@staticmethod 
+    # def extract_Docx_tables(document):            
+        # tables = []
+        # for table in document.tables:
+            # df = [['' for i in range(len(table.columns))] for j in range(len(table.rows))]
+            # for i, row in enumerate(table.rows):
+                # for j, cell in enumerate(row.cells):
+                    # if cell.text:
+                        # df[i][j] = cell.text
+            # tables.append(pd.DataFrame(df))
+        # return tables
     
     @staticmethod    
     def chunk_text(input):
