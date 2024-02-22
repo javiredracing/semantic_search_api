@@ -16,6 +16,7 @@ import torch, os, io
 from datetime import datetime
 from lib.ProcessText import *
 import json
+import time
 
 tags_metadata = [
   #  {
@@ -36,13 +37,14 @@ tags_metadata = [
     },
 ]
 
-PREFIX_PASSAGE = "passage: "
-PREFIX_QUERY = "query: "
+#PREFIX_PASSAGE = "passage: "
+#PREFIX_QUERY = "query: "
 #https://github.com/deepset-ai/haystack/tree/main/rest_api
-TRANSFORMER = "intfloat/multilingual-e5-small"
+#TRANSFORMER = "intfloat/multilingual-e5-base"
 #TRANSFORMER = "mrm8488/distiluse-base-multilingual-cased-v2-finetuned-stsb_multi_mt-es"
-model = SentenceTransformer(TRANSFORMER)
-print(model)
+TRANSFORMER = 'intfloat/multilingual-e5-large-instruct'
+#model = SentenceTransformer(TRANSFORMER,device="cuda")
+#print(model)
 
 description = """
 Ask questions about the documents provided. 🚀
@@ -50,7 +52,7 @@ Ask questions about the documents provided. 🚀
 Model Max Sequence Length: **{}**.
 Torch version: **{}**.
 Is CUDA enabled? **{}**.
-""".format(model.max_seq_length, torch.__version__, torch.cuda.is_available())
+""".format(512, torch.__version__, torch.cuda.is_available())
 
 app = FastAPI(
     title="Semantic search service",
@@ -69,7 +71,8 @@ app = FastAPI(
     },openapi_tags=tags_metadata
     )
 
-document_store = InMemoryDocumentStore(use_bm25=True, similarity='cosine', embedding_dim=model[1].word_embedding_dimension)   #large_model=1024, small=384
+#document_store = InMemoryDocumentStore(use_bm25=True, similarity='cosine', embedding_dim=model[1].word_embedding_dimension)   #large_model=1024, small=384
+document_store = InMemoryDocumentStore(use_bm25=True, similarity='cosine',  embedding_dim=1024)   #large_model=1024, small=384
 retriever1 = EmbeddingRetriever(
     document_store=document_store,
     embedding_model=TRANSFORMER,
@@ -77,7 +80,7 @@ retriever1 = EmbeddingRetriever(
     scale_score=True,
 )
 retriever2 = BM25Retriever(document_store=document_store)
-reader = FARMReader("MMG/bert-base-spanish-wwm-cased-finetuned-spa-squad2-es-finetuned-sqac", use_gpu=True, context_window_size=3000) 
+reader = FARMReader("MMG/bert-base-spanish-wwm-cased-finetuned-spa-squad2-es-finetuned-sqac", use_gpu=True, context_window_size=3000, max_seq_len=384, max_query_length=128) 
 #PlanTL-GOB-ES/roberta-large-bne-sqac
   
 class RequestBaseModel(BaseModel):
@@ -124,7 +127,8 @@ def document_manager(files, metadata, force_update):
                 meta = None
                 if metadata and len(metadata) > i:
                     meta = metadata[i]
-                docs = docs + generateEmbeddings(splitted_text, text_pages, file.filename, meta)
+                #docs = docs + generateEmbeddings(splitted_text, text_pages, file.filename, meta)
+                docs = docs + createDocs(splitted_text, text_pages, file.filename, meta)
                 
         else:
             print("error extension1")
@@ -132,20 +136,43 @@ def document_manager(files, metadata, force_update):
 
     if len(docs) > 0:    
         document_store.write_documents(docs)
+        document_store.update_embeddings(retriever = retriever1, update_existing_embeddings=False)
  
-def generateEmbeddings(texts, pages, filename, metadata = None):
+# def generateEmbeddings(texts, pages, filename, metadata = None):
+    # docs = []
+    # if len(texts) > 0:
+        # #embeddings = model.encode([PREFIX_PASSAGE + i.replace('\r\n', '') for i in texts], normalize_embeddings=True, show_progress_bar=True)
+        # start = time.process_time()
+        # embeddings = model.encode([i.replace('\r\n', '') for i in texts], normalize_embeddings=True, show_progress_bar=True, device="cuda")             
+        # #end = time.process_time()
+        # #print("Processing time:",end - start)
+        # end = time.process_time()
+        # print("Processing time:",end - start)
+        # table_with_embeddings = pd.DataFrame(
+            # {"content": texts, "embedding": embeddings.tolist()}
+        # )        
+        # now = datetime.now()
+        # dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        # # select from table and build in memory search pipeline without re-computing embeddings
+        # for i, row in table_with_embeddings.iterrows():
+            # currentMetadata = {'name': filename, "paragraph":i, "timestamp":dt_string}
+            # if metadata:
+                # currentMetadata.update(metadata)
+            # if len(pages) == len(texts):
+                # currentMetadata.update({"page":pages[i]})
+            # elif len(pages) == 1:
+                # currentMetadata.update({"page":pages[0]})
+                
+            # docs.append(Document(content=row["content"], embedding=row["embedding"], content_type="text", meta=currentMetadata))
+    # return docs
+    
+def createDocs(texts, pages, filename, metadata = None):
     docs = []
     if len(texts) > 0:
-        embeddings = model.encode([PREFIX_PASSAGE + i.replace('\r\n', '') for i in texts], normalize_embeddings=True, show_progress_bar=True)     
-        #end = time.process_time()
-        #print("Processing time:",end - start)
-        table_with_embeddings = pd.DataFrame(
-            {"content": texts, "embedding": embeddings.tolist()}
-        )        
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         # select from table and build in memory search pipeline without re-computing embeddings
-        for i, row in table_with_embeddings.iterrows():
+        for i, text in enumerate(texts):
             currentMetadata = {'name': filename, "paragraph":i, "timestamp":dt_string}
             if metadata:
                 currentMetadata.update(metadata)
@@ -154,8 +181,12 @@ def generateEmbeddings(texts, pages, filename, metadata = None):
             elif len(pages) == 1:
                 currentMetadata.update({"page":pages[0]})
                 
-            docs.append(Document(content=row["content"], embedding=row["embedding"], content_type="text", meta=currentMetadata))
+            docs.append(Document(content=text, content_type="text", meta=currentMetadata))
     return docs
+
+def get_detailed_instruct(query: str) -> str:
+    task_description = 'Given a web search query, retrieve relevant passages that answer the query'
+    return f'Instruct: {task_description}\nQuery: {query}'
     
 def searchInDocstore(params):
     count = params.query.strip().count(" ")+ 1
@@ -172,7 +203,8 @@ def searchInDocstore(params):
     else:
         #print("model method")
         prediction = retriever1.retrieve(
-            query= PREFIX_QUERY + params.query.strip(),
+            #query= PREFIX_QUERY + params.query.strip(),
+            query= get_detailed_instruct(params.query.strip()),
             top_k=params.top_k,
             filters=params.filters
         )

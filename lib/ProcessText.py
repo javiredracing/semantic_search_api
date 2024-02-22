@@ -14,11 +14,9 @@ class ProcessText:
     
     @staticmethod
     def check_if_header(pages):
-        print("pages", len(pages))
         if len(pages) > 1:    
             pages[0] = pages[0].strip()
             first_page = pages[0].splitlines()
-            print(first_page[0])
             for idx, line in enumerate(first_page): 
                 for s in pages[1:]:
                      s = s.strip()
