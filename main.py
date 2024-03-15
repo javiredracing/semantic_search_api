@@ -136,7 +136,7 @@ def document_manager(files, metadata, force_update):
         del docs
         document_store.write_documents(documents_with_embeddings)
  
-  def createDocs(texts, pages, filename, metadata = None):
+def createDocs(texts, pages, filename, metadata = None):
     docs = []
     if len(texts) > 0:
         now = datetime.now()
