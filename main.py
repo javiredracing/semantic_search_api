@@ -375,7 +375,7 @@ def delete_documents(filters: FilterRequest):
     """
     
     prediction = document_store.filter_documents(filters=filters.filters)
-    ids = [doc["id"] for doc in prediction]
+    ids = [doc.id for doc in prediction]
     document_store.delete_documents(document_ids=ids)
     return True
 
