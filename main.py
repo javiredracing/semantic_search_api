@@ -1,9 +1,9 @@
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Body
 from fastapi.responses import HTMLResponse
-from typing_extensions import Annotated
-from pydantic import BaseModel, Extra, Field
+#from typing_extensions import Annotated
+from pydantic import BaseModel, Extra, Field, model_validator
 
-from typing import Dict, List, Optional, Union, Literal
+from typing import Dict, List, Optional, Union, Literal, Annotated
 
 from haystack import Document
 from haystack.document_stores.in_memory import InMemoryDocumentStore
@@ -70,7 +70,7 @@ app = FastAPI(
     },openapi_tags=tags_metadata
     )
 
-document_store = InMemoryDocumentStore(embedding_similarity_function="cosine")
+document_store = InMemoryDocumentStore(embedding_similarity_function="cosine", bm25_algorithm="BM25Plus")
 
 document_embedder = SentenceTransformersDocumentEmbedder(model=TRANSFORMER,  normalize_embeddings=True )  
 document_embedder.warm_up()
@@ -90,11 +90,9 @@ class FilterRequest(RequestBaseModel):
     filters: Optional[Dict[str, Union[PrimitiveType, List[PrimitiveType], Dict[str, PrimitiveType]]]] = None
     
 class InputParams(RequestBaseModel):
-    metadata: List[Union[None, dict, ]] = None   
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate_to_json
-
+    metadata: Optional[List[dict,]]= None   
+        
+    @model_validator(mode='before')
     @classmethod
     def validate_to_json(cls, value):
         if isinstance(value, str):
@@ -103,14 +101,13 @@ class InputParams(RequestBaseModel):
         
 class SearchQueryParam(FilterRequest):
     query:str = Field(title="Query max length 1500 chars", max_length=1500)
-    #max_text_len:int = Field(default=1000 ,gt=0, le=1500, description="Max length of results text")
     top_k:int = Field(default=5,gt=0, le=50, description="Number of search results")
     context_size:int = Field(default=0,ge=0, le=20, description="Number of paragrhaps in context")
     
 class AskQueryParams(SearchQueryParam):
     top_k_answers:int = Field(default=2,gt=0, le=50, description="Number of ask results")
 
-def document_manager(files, metadata, force_update):
+def document_manager(files, metadata):
     docs = []
     for i,file in enumerate(files):
         nameParsed = file.filename.split(".")        
@@ -119,17 +116,13 @@ def document_manager(files, metadata, force_update):
             if len(splitted_text) == 0:
                 return("error")            
             else:
-                #if force_update:
-                #    document_store.delete_documents(filters={'name': file.filename})
                 meta = None
                 if metadata and len(metadata) > i:
                     meta = metadata[i]
-                #docs = docs + generateEmbeddings(splitted_text, text_pages, file.filename, meta)
                 docs = docs + createDocs(splitted_text, text_pages, file.filename, meta)
                 
         else:
             print("error extension1")
-            #break
 
     if len(docs) > 0:            
         documents_with_embeddings = document_embedder.run(docs)["documents"]
@@ -151,7 +144,7 @@ def createDocs(texts, pages, filename, metadata = None):
             elif len(pages) == 1:
                 currentMetadata.update({"page":pages[0]})
                 
-            docs.append(Document(content=text, content_type="text", meta=currentMetadata))
+            docs.append(Document(content=text, meta=currentMetadata))
     return docs
 
 def get_detailed_instruct(query: str) -> str:
@@ -286,7 +279,7 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     return result
    
 @app.post("/documents/show/", tags=["docs"])
-def show_documents(filters: FilterRequest, index: Optional[str] = None):
+def show_documents(filters: FilterRequest):
     """
     This endpoint allows you to retrieve documents contained in your document store.
     You can filter the documents to retrieve by metadata (like the document's name),
@@ -319,7 +312,7 @@ def show_documents(filters: FilterRequest, index: Optional[str] = None):
     return result
     
 @app.post("/documents/name_list/", tags=["docs"])
-def list_documents_name(filters: FilterRequest, index: Optional[str] = None):
+def list_documents_name(filters: FilterRequest):
 
      """
         This endpoint allows you to retrieve the filename of all documents loaded.
@@ -380,19 +373,17 @@ def delete_documents(filters: FilterRequest):
     return True
 
 @app.post("/documents/upload/", tags=["docs"])
-#def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(None) , force_update:Annotated[bool, Form(description="Remove older files")] = True):
-def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks):
+def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(...)):
     """
-    This endpoint accepts documents in .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg and .txt format at this time. It only can be parsed by "\\n" character.
+    This endpoint accepts documents in .doc, .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg and .txt format at this time. It only can be parsed by "\\n" character.
     
-    `TODO: Add support for other document formats (DOC,...) and more parsing options.`
+    `TODO: Add support for other parsing options.`
     
     Metadata example for each file added: `{"name": ["some", "more"], "category": ["only_one"]}`    OR    empty
     """
     #
     #https://stackoverflow.com/questions/63110848/how-do-i-send-list-of-dictionary-as-body-parameter-together-with-files-in-fastap
-    #background_tasks.add_task(document_manager, files, metadata.metadata, force_update)
-    background_tasks.add_task(document_manager, copy.deepcopy(files),[{}], True)
+    background_tasks.add_task(document_manager, copy.deepcopy(files), metadata.metadata)
 
         
     return {"message":"Files uploaded correctly, processing..." , "filenames": [file.filename for file in files]}
