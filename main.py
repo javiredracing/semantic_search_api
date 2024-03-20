@@ -2,13 +2,13 @@ from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Body
 from fastapi.responses import HTMLResponse
 #from typing_extensions import Annotated
 from pydantic import BaseModel, Extra, Field, model_validator
-
+from sentence_transformers import SentenceTransformer
 from typing import Dict, List, Optional, Union, Literal, Annotated
 
 from haystack import Document
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack.components.readers import ExtractiveReader
-from haystack.components.embedders import SentenceTransformersTextEmbedder, SentenceTransformersDocumentEmbedder
+#from haystack.components.embedders import SentenceTransformersTextEmbedder, SentenceTransformersDocumentEmbedder
 #from haystack.utils import print_documents
 #from haystack.utils import print_answers
 import torch, os, io, copy
@@ -42,7 +42,7 @@ tags_metadata = [
 #TRANSFORMER = "intfloat/multilingual-e5-base"
 #TRANSFORMER = "mrm8488/distiluse-base-multilingual-cased-v2-finetuned-stsb_multi_mt-es"
 TRANSFORMER = 'intfloat/multilingual-e5-large-instruct'
-#model = SentenceTransformer(TRANSFORMER,device="cuda")
+model = SentenceTransformer(TRANSFORMER,device="cuda")
 #print(model)
 
 description = """
@@ -72,10 +72,10 @@ app = FastAPI(
 
 document_store = InMemoryDocumentStore(embedding_similarity_function="cosine", bm25_algorithm="BM25Plus")
 
-document_embedder = SentenceTransformersDocumentEmbedder(model=TRANSFORMER,  normalize_embeddings=True )  
-document_embedder.warm_up()
-text_embedder = SentenceTransformersTextEmbedder(model=TRANSFORMER,  normalize_embeddings=True )
-text_embedder.warm_up()
+#document_embedder = SentenceTransformersDocumentEmbedder(model=TRANSFORMER,  normalize_embeddings=True )  
+#document_embedder.warm_up()
+#text_embedder = SentenceTransformersTextEmbedder(model=TRANSFORMER,  normalize_embeddings=True )
+#text_embedder.warm_up()
 reader = ExtractiveReader(model="MMG/bert-base-spanish-wwm-cased-finetuned-spa-squad2-es-finetuned-sqac",no_answer=False)
 reader.warm_up()
 #PlanTL-GOB-ES/roberta-large-bne-sqac
@@ -119,22 +119,29 @@ def document_manager(files, metadata):
                 meta = None
                 if metadata and len(metadata) > i:
                     meta = metadata[i]
+                
                 docs = docs + createDocs(splitted_text, text_pages, file.filename, meta)
                 
         else:
             print("error extension1")
 
-    if len(docs) > 0:            
-        documents_with_embeddings = document_embedder.run(docs)["documents"]
-        del docs
-        document_store.write_documents(documents_with_embeddings)
+    if len(docs) > 0:         
+        # start = time.process_time()
+        # documents_with_embeddings = document_embedder.run(docs)["documents"]
+        # end = time.process_time()
+        # print("Processing time:",end - start)       
+        document_store.write_documents(docs)
  
 def createDocs(texts, pages, filename, metadata = None):
     docs = []
     if len(texts) > 0:
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-        # select from table and build in memory search pipeline without re-computing embeddings
+        
+#        start = time.process_time()
+        doc_emb = model.encode(texts, normalize_embeddings=True, show_progress_bar=True, device="cuda", batch_size=8)#batch_size optimum for NVIDIA GeForce GTX 1650
+#        end = time.process_time()
+#        print("Processing time:",end - start)
         for i, text in enumerate(texts):
             currentMetadata = {'name': filename, "paragraph":i, "timestamp":dt_string}
             if metadata:
@@ -143,8 +150,9 @@ def createDocs(texts, pages, filename, metadata = None):
                 currentMetadata.update({"page":pages[i]})
             elif len(pages) == 1:
                 currentMetadata.update({"page":pages[0]})
-                
-            docs.append(Document(content=text, meta=currentMetadata))
+            
+            docs.append(Document(content=text, meta=currentMetadata, embedding=doc_emb[i]))
+            #docs.append(Document(content=text, meta=currentMetadata))
     return docs
 
 def get_detailed_instruct(query: str) -> str:
@@ -161,8 +169,9 @@ def searchInDocstore(params):
            del doc.embedding
     else:
         myquery=get_detailed_instruct(params.query.strip())
-        embedding_query = text_embedder.run(text=myquery)["embedding"]
-        prediction = document_store.embedding_retrieval(query_embedding=embedding_query, top_k=params.top_k, filters=params.filters, return_embedding=False)
+        #embedding_query = text_embedder.run(text=myquery)["embedding"]
+        embedding_query = model.encode(myquery, normalize_embeddings=True, show_progress_bar=True, device="cuda", batch_size=4)
+        prediction = document_store.embedding_retrieval(query_embedding=embedding_query.tolist(), top_k=params.top_k, filters=params.filters, return_embedding=False)
     #print_documents(prediction, max_text_len=query.max_text_len, print_name=True, print_meta=True)
     return prediction
 
@@ -304,7 +313,7 @@ def show_documents(filters: FilterRequest):
     prediction = document_store.filter_documents(filters=filters.filters)
     result = []
     for doc in prediction:
-        doc_dict= doc.to_dict()
+        doc_dict= doc.to_dict()        
         del doc_dict["embedding"]
         result.append(doc_dict)
 
