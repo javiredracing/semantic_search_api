@@ -75,7 +75,7 @@ app = FastAPI(
     )
 
 #document_store = InMemoryDocumentStore(embedding_similarity_function="cosine", bm25_algorithm="BM25Plus")
-document_store = ElasticsearchDocumentStore(hosts = "http://192.168.53.58:9200", index="semantic_search")
+document_store = ElasticsearchDocumentStore(hosts = "http://localhost:9200", index="semantic_search")
 
 #document_embedder = SentenceTransformersDocumentEmbedder(model=TRANSFORMER,  normalize_embeddings=True )  
 #document_embedder.warm_up()
@@ -125,7 +125,7 @@ def document_manager(files, metadata):
                 if metadata and len(metadata) > i:
                     meta = metadata[i]
                 executor.submit(processFile, file, nameParsed[1],meta)
-                #processDocuments(file,nameParsed[1], meta)
+                #processFile(file,nameParsed[1], meta)
             else:
                 print("error extension1")
     
@@ -134,9 +134,9 @@ def document_manager(files, metadata):
      
 def processFile(file, ext, metadata):
     docs = []
-    texts, pages = ProcessText.readFile(file.file.read(),ext)               
+    texts, pages = ProcessText.readFile(file.file.read(),e               
     if len(texts) > 0:        
-        req = requests.post("http://192.168.53.58:7997/embeddings", json={"input": texts, "model": TRANSFORMER})  #encode texts infinity api
+        req = requests.post("http://0.0.0.0:7997/embeddings", json={"input": texts, "model": TRANSFORMER})  #encode texts infinity api
         if req.status_code == 200:
             doc_emb = req.json()["data"]
             now = datetime.now()
@@ -164,7 +164,7 @@ def searchInDocstore(params):
     prediction = None
     if  count < 3: 
         #print("BM25 method")
-        prediction = bm25retriever.run(query=params.query.strip(),top_k=params.top_k, filters=params.filters)
+        prediction = bm25retriever.run(query=params.query.strip(),top_k=params.top_k, filters=params.filters)["documents"]
         #prediction = document_store.bm25_retrieval(query=params.query.strip(), top_k=params.top_k, filters=params.filters, scale_score=True)
         for doc in prediction:
            del doc.embedding
@@ -172,12 +172,14 @@ def searchInDocstore(params):
         myquery=get_detailed_instruct(params.query.strip())
         #embedding_query = text_embedder.run(text=myquery)["embedding"]
         #embedding_query = model.encode(myquery, normalize_embeddings=True, show_progress_bar=True, device="cuda", batch_size=4)
-        req = requests.post("http://192.168.53.58:7997/embeddings", json={"input": myquery,"model": TRANSFORMER})    #encode query   
+        req = requests.post("http://0.0.0.0:7997/embeddings", json={"input": myquery,"model": TRANSFORMER})    #encode query   
     
         if req.status_code == 200:            
             query_embedding = req.json()["data"][0]["embedding"]
             #prediction = document_store.embedding_retrieval(query_embedding=query_embedding, top_k=params.top_k, filters=params.filters, return_embedding=False)
-            prediction = retriever.run(query=query_embeddings, top_k=params.top_k, filters=params.filters)
+            prediction = retriever.run(query_embedding=query_embedding, top_k=params.top_k, filters=params.filters)["documents"]
+            for doc in prediction:
+               del doc.embedding
     #print_documents(prediction, max_text_len=query.max_text_len, print_name=True, print_meta=True)
     return prediction
 
@@ -191,7 +193,10 @@ def getContext(docs, context_size):
             min_paragrah = list(range(min_paragrah,currentParagraph))
             max_paragraph = list(range(currentParagraph + 1, currentParagraph + context_size + 1))
             context_list = min_paragrah + max_paragraph
-            getDocuments = document_store.filter_documents(filters={"name":doc["name"], "paragraph": context_list})
+            current_filters = {"operator": "AND", 
+            "conditions": [{"field": "meta.name", "operator": "==", "value": doc["name"]},{"field": "meta.paragraph", "operator": "in", "value": context_list},]}
+            #getDocuments = document_store.filter_documents(filters={"name":doc["name"], "paragraph": context_list})
+            getDocuments = document_store.filter_documents(filters=current_filters)
             doc["before_context"] = []
             doc["after_context"] = []
             for context in getDocuments:
@@ -233,17 +238,13 @@ def search_document(params:Annotated[SearchQueryParam, Body(embed=True)]):
     
     To get all documents you should provide an empty dict, like:`'{"filters": {}}`
     
-    **Simple** `'{"filters": {{"name": ["some", "more"], "category": ["only_one"]}}'`
-    
-    **Advanced** `{"filters":{
-    "type": "article",
-    "date": {"$gte": "2015-01-01", "$lt": "2021-01-01"},
-    "rating": {"$gte": 3},
-    "$or": {
-        "genre": ["economy", "politics"],
-        "publisher": "nytimes"
-    }
-    }}`
+    {"filters": { "operator": "AND",
+      			"conditions": [
+        			{"field": "meta.name", "operator": "==", "value": "2019"},
+        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]},
+      					]
+    			   }
+  		      }
     """
     docs = searchInDocstore(params)
 
@@ -264,17 +265,13 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     
     To get all documents you should provide an empty dict, like:`'{"filters": {}}`
     
-    **Simple** `'{"filters": {{"name": ["some", "more"], "category": ["only_one"]}}'`
-    
-    **Advanced** `{"filters":{
-    "type": "article",
-    "date": {"$gte": "2015-01-01", "$lt": "2021-01-01"},
-    "rating": {"$gte": 3},
-    "$or": {
-        "genre": ["economy", "politics"],
-        "publisher": "nytimes"
-    }
-    }}`
+    {"filters": { "operator": "AND",
+      			"conditions": [
+        			{"field": "meta.name", "operator": "==", "value": "2019"},
+        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]},
+      					]
+    			   }
+  		      }
     """
    
     myDocs = searchInDocstore(params)
@@ -304,17 +301,13 @@ def show_documents(filters: FilterRequest):
     
     To get all documents you should provide an empty dict, like:`'{"filters": {}}`
     
-    **Simple** `'{"filters": {{"name": ["some", "more"], "category": ["only_one"]}}'`
-    
-    **Advanced** `{"filters":{
-    "type": "article",
-    "date": {"$gte": "2015-01-01", "$lt": "2021-01-01"},
-    "rating": {"$gte": 3},
-    "$or": {
-        "genre": ["economy", "politics"],
-        "publisher": "nytimes"
-    }
-    }}`
+    {"filters": { "operator": "AND",
+      			"conditions": [
+        			{"field": "meta.name", "operator": "==", "value": "2019"},
+        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]},
+      					]
+    			   }
+  		      }
     """
     prediction = document_store.filter_documents(filters=filters.filters)
     result = []
@@ -338,17 +331,13 @@ def list_documents_name(filters: FilterRequest):
         
         To get all documents you should provide an empty dict, like:`'{"filters": {}}`
         
-        **Simple** `'{"filters": {{"name": ["some", "more"], "category": ["only_one"]}}'`
-        
-        **Advanced** `{"filters":{
-        "type": "article",
-        "date": {"$gte": "2015-01-01", "$lt": "2021-01-01"},
-        "rating": {"$gte": 3},
-        "$or": {
-            "genre": ["economy", "politics"],
-            "publisher": "nytimes"
-        }
-        }}`
+        {"filters": { "operator": "AND",
+                    "conditions": [
+                        {"field": "meta.name", "operator": "==", "value": "2019"},
+                        {"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]},
+                            ]
+                       }
+                  }
     """
      prediction = document_store.filter_documents(filters=filters.filters)
      
@@ -369,17 +358,13 @@ def delete_documents(filters: FilterRequest):
     
     To get all documents you should provide an empty dict, like:`'{"filters": {}}`
     
-    **Simple** `'{"filters": {{"name": ["some", "more"], "category": ["only_one"]}}'`
-    
-    **Advanced** `{"filters":{
-    "type": "article",
-    "date": {"$gte": "2015-01-01", "$lt": "2021-01-01"},
-    "rating": {"$gte": 3},
-    "$or": {
-        "genre": ["economy", "politics"],
-        "publisher": "nytimes"
-    }
-    }}`
+    {"filters": { "operator": "AND",
+      			"conditions": [
+        			{"field": "meta.name", "operator": "==", "value": "2019"},
+        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]},
+      					]
+    			   }
+  		      }
     """
     
     prediction = document_store.filter_documents(filters=filters.filters)
