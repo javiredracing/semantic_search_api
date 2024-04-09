@@ -9,3 +9,4 @@ sentence-transformers
 transformers[torch,sentencepiece]
 python-multipart
 email-validator
+elasticsearch-haystack

@@ -2,16 +2,23 @@ from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Body
 from fastapi.responses import HTMLResponse
 #from typing_extensions import Annotated
 from pydantic import BaseModel, Extra, Field, model_validator
-from sentence_transformers import SentenceTransformer
+#from sentence_transformers import SentenceTransformer
+import requests
+import concurrent
+
 from typing import Dict, List, Optional, Union, Literal, Annotated
 
 from haystack import Document
-from haystack.document_stores.in_memory import InMemoryDocumentStore
+#from haystack.document_stores.in_memory import InMemoryDocumentStore
+from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
+from haystack_integrations.components.retrievers.elasticsearch import ElasticsearchBM25Retriever
+from haystack_integrations.components.retrievers.elasticsearch import ElasticsearchEmbeddingRetriever
+
 from haystack.components.readers import ExtractiveReader
 #from haystack.components.embedders import SentenceTransformersTextEmbedder, SentenceTransformersDocumentEmbedder
 #from haystack.utils import print_documents
 #from haystack.utils import print_answers
-import torch, os, io, copy
+import os, io, copy
 from datetime import datetime
 from lib.ProcessText import *
 import json
@@ -36,22 +43,19 @@ tags_metadata = [
     },
 ]
 
-#PREFIX_PASSAGE = "passage: "
-#PREFIX_QUERY = "query: "
 #https://github.com/deepset-ai/haystack/tree/main/rest_api
 #TRANSFORMER = "intfloat/multilingual-e5-base"
 #TRANSFORMER = "mrm8488/distiluse-base-multilingual-cased-v2-finetuned-stsb_multi_mt-es"
 TRANSFORMER = 'intfloat/multilingual-e5-large-instruct'
-model = SentenceTransformer(TRANSFORMER,device="cuda")
+#model = SentenceTransformer(TRANSFORMER,device="cuda")
 #print(model)
+SERVER_URL=""
 
 description = """
 Ask questions about the documents provided. 🚀
-## Configs:
-Model Max Sequence Length: **{}**.
-Torch version: **{}**.
-Is CUDA enabled? **{}**.
-""".format(512, torch.__version__, torch.cuda.is_available())
+Model Max Sequence Length: **512**.
+Required infinity service (https://github.com/michaelfeil/infinity)
+"""
 
 app = FastAPI(
     title="Semantic search service",
@@ -70,12 +74,16 @@ app = FastAPI(
     },openapi_tags=tags_metadata
     )
 
-document_store = InMemoryDocumentStore(embedding_similarity_function="cosine", bm25_algorithm="BM25Plus")
+#document_store = InMemoryDocumentStore(embedding_similarity_function="cosine", bm25_algorithm="BM25Plus")
+document_store = ElasticsearchDocumentStore(hosts = "http://192.168.53.58:9200", index="semantic_search")
 
 #document_embedder = SentenceTransformersDocumentEmbedder(model=TRANSFORMER,  normalize_embeddings=True )  
 #document_embedder.warm_up()
 #text_embedder = SentenceTransformersTextEmbedder(model=TRANSFORMER,  normalize_embeddings=True )
 #text_embedder.warm_up()
+bm25retriever = ElasticsearchBM25Retriever(document_store=document_store, scale_score=True)
+retriever = ElasticsearchEmbeddingRetriever(document_store=document_store)
+
 reader = ExtractiveReader(model="MMG/bert-base-spanish-wwm-cased-finetuned-spa-squad2-es-finetuned-sqac",no_answer=False)
 reader.warm_up()
 #PlanTL-GOB-ES/roberta-large-bne-sqac
@@ -108,52 +116,44 @@ class AskQueryParams(SearchQueryParam):
     top_k_answers:int = Field(default=2,gt=0, le=50, description="Number of ask results")
 
 def document_manager(files, metadata):
-    docs = []
-    for i,file in enumerate(files):
-        nameParsed = file.filename.split(".")        
-        if len(nameParsed) > 1:
-            splitted_text, text_pages = ProcessText.readFile(file.file.read(),nameParsed[1])
-            if len(splitted_text) == 0:
-                return("error")            
-            else:
+    start = time.process_time()
+    with concurrent.futures.ThreadPoolExecutor() as executor: # optimally defined number of threads
+        for i,file in enumerate(files):
+            nameParsed = file.filename.split(".")        
+            if len(nameParsed) > 1:                       
                 meta = None
                 if metadata and len(metadata) > i:
                     meta = metadata[i]
-                
-                docs = docs + createDocs(splitted_text, text_pages, file.filename, meta)
-                
-        else:
-            print("error extension1")
-
-    if len(docs) > 0:         
-        # start = time.process_time()
-        # documents_with_embeddings = document_embedder.run(docs)["documents"]
-        # end = time.process_time()
-        # print("Processing time:",end - start)       
-        document_store.write_documents(docs)
- 
-def createDocs(texts, pages, filename, metadata = None):
+                executor.submit(processFile, file, nameParsed[1],meta)
+                #processDocuments(file,nameParsed[1], meta)
+            else:
+                print("error extension1")
+    
+    end = time.process_time()
+    print("Processing time:",end - start)
+     
+def processFile(file, ext, metadata):
     docs = []
-    if len(texts) > 0:
-        now = datetime.now()
-        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-        
-#        start = time.process_time()
-        doc_emb = model.encode(texts, normalize_embeddings=True, show_progress_bar=True, device="cuda", batch_size=8)#batch_size optimum for NVIDIA GeForce GTX 1650
-#        end = time.process_time()
-#        print("Processing time:",end - start)
-        for i, text in enumerate(texts):
-            currentMetadata = {'name': filename, "paragraph":i, "timestamp":dt_string}
-            if metadata:
-                currentMetadata.update(metadata)
-            if len(pages) == len(texts):
-                currentMetadata.update({"page":pages[i]})
-            elif len(pages) == 1:
-                currentMetadata.update({"page":pages[0]})
-            
-            docs.append(Document(content=text, meta=currentMetadata, embedding=doc_emb[i]))
-            #docs.append(Document(content=text, meta=currentMetadata))
-    return docs
+    texts, pages = ProcessText.readFile(file.file.read(),ext)               
+    if len(texts) > 0:        
+        req = requests.post("http://192.168.53.58:7997/embeddings", json={"input": texts, "model": TRANSFORMER})  #encode texts infinity api
+        if req.status_code == 200:
+            doc_emb = req.json()["data"]
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+            for i, text in enumerate(texts):
+                currentMetadata = {'name': file.filename, "paragraph":i, "timestamp":dt_string}
+                if metadata:
+                    currentMetadata.update(metadata)
+                if len(pages) == len(texts):
+                    currentMetadata.update({"page":pages[i]})
+                elif len(pages) == 1:
+                    currentMetadata.update({"page":pages[0]})
+                
+                docs.append(Document(content=text, meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
+                
+    if len(docs) > 0:
+        document_store.write_documents(docs)
 
 def get_detailed_instruct(query: str) -> str:
     task_description = 'Given a web search query, retrieve relevant passages that answer the query'
@@ -164,14 +164,20 @@ def searchInDocstore(params):
     prediction = None
     if  count < 3: 
         #print("BM25 method")
-        prediction = document_store.bm25_retrieval(query=params.query.strip(), top_k=params.top_k, filters=params.filters, scale_score=True)
+        prediction = bm25retriever.run(query=params.query.strip(),top_k=params.top_k, filters=params.filters)
+        #prediction = document_store.bm25_retrieval(query=params.query.strip(), top_k=params.top_k, filters=params.filters, scale_score=True)
         for doc in prediction:
            del doc.embedding
     else:
         myquery=get_detailed_instruct(params.query.strip())
         #embedding_query = text_embedder.run(text=myquery)["embedding"]
-        embedding_query = model.encode(myquery, normalize_embeddings=True, show_progress_bar=True, device="cuda", batch_size=4)
-        prediction = document_store.embedding_retrieval(query_embedding=embedding_query.tolist(), top_k=params.top_k, filters=params.filters, return_embedding=False)
+        #embedding_query = model.encode(myquery, normalize_embeddings=True, show_progress_bar=True, device="cuda", batch_size=4)
+        req = requests.post("http://192.168.53.58:7997/embeddings", json={"input": myquery,"model": TRANSFORMER})    #encode query   
+    
+        if req.status_code == 200:            
+            query_embedding = req.json()["data"][0]["embedding"]
+            #prediction = document_store.embedding_retrieval(query_embedding=query_embedding, top_k=params.top_k, filters=params.filters, return_embedding=False)
+            prediction = retriever.run(query=query_embeddings, top_k=params.top_k, filters=params.filters)
     #print_documents(prediction, max_text_len=query.max_text_len, print_name=True, print_meta=True)
     return prediction
 
