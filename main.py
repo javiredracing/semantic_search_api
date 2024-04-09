@@ -134,7 +134,7 @@ def document_manager(files, metadata):
      
 def processFile(file, ext, metadata):
     docs = []
-    texts, pages = ProcessText.readFile(file.file.read(),e               
+    texts, pages = ProcessText.readFile(file.file.read(),ext)               
     if len(texts) > 0:        
         req = requests.post("http://0.0.0.0:7997/embeddings", json={"input": texts, "model": TRANSFORMER})  #encode texts infinity api
         if req.status_code == 200:
