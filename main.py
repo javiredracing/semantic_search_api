@@ -5,7 +5,8 @@ from pydantic import BaseModel, Extra, Field, model_validator
 #from sentence_transformers import SentenceTransformer
 import requests
 import concurrent
-
+import subprocess
+import shutil
 from typing import Dict, List, Optional, Union, Literal, Annotated
 
 from haystack import Document
@@ -24,6 +25,7 @@ from lib.ProcessText import *
 import json
 import time
 
+ROOT = '/home/administrador/audio'
 tags_metadata = [
   #  {
   #      "name": "Question/answer docs",
@@ -41,6 +43,10 @@ tags_metadata = [
         "name": "docs",
         "description": "Manage documents",
     },
+    {
+        "name": "audio",
+        "description": "Manage audio",
+    },
 ]
 
 #https://github.com/deepset-ai/haystack/tree/main/rest_api
@@ -50,6 +56,7 @@ TRANSFORMER = 'intfloat/multilingual-e5-large-instruct'
 #model = SentenceTransformer(TRANSFORMER,device="cuda")
 #print(model)
 SERVER_URL=""
+AUDIO_PATH="/home/administrador/audio"
 
 description = """
 Ask questions about the documents provided. 🚀
@@ -119,8 +126,8 @@ def document_manager(files, metadata):
     start = time.process_time()
     with concurrent.futures.ThreadPoolExecutor() as executor: # optimally defined number of threads
         for i,file in enumerate(files):
-            nameParsed = file.filename.split(".")        
-            if len(nameParsed) > 1:                       
+            nameParsed = file.filename.split(".")            
+            if len(nameParsed) > 1:                                        
                 meta = None
                 if metadata and len(metadata) > i:
                     meta = metadata[i]
@@ -131,7 +138,25 @@ def document_manager(files, metadata):
     
     end = time.process_time()
     print("Processing time:",end - start)
-     
+
+def audio_manager(files, metadata):
+    
+    start = time.process_time()
+    #2. launch process to generate srt, txt and json outputs in audio path
+    for i,file in enumerate(files):
+        p = subprocess.run(["/home/administrador/whisper-diarization/venv/bin/python3", "/home/administrador/whisper-diarization/diarize_parallel.py", "-a", file, "--no-stem", "--whisper-model", "large-v3", "--device", "cuda", "--language", "es", "--batch-size", "32"])                        
+
+    #3. read json outputs from audio path, encode and upload to database as documents
+    with concurrent.futures.ThreadPoolExecutor() as executor: # optimally defined number of threads
+        for i,file in enumerate(files):
+            meta = None
+            if metadata and len(metadata) > i:
+                meta = metadata[i]
+            executor.submit(processSRT_json, file, meta)
+            #processSRT_json(file,meta)
+    end = time.process_time()
+    print("Processing time:",end - start)
+
 def processFile(file, ext, metadata):
     docs = []
     texts, pages = ProcessText.readFile(file.file.read(),ext)               
@@ -152,6 +177,32 @@ def processFile(file, ext, metadata):
                 
                 docs.append(Document(content=text, meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
                 
+    if len(docs) > 0:
+        document_store.write_documents(docs)
+
+def processSRT_json(file,metadata):
+    docs = []
+    filename = file.split(".")
+    audio_file = os.path.join(ROOT, filename[0]+".json")
+    with open(audio_file, encoding='utf-8-sig') as json_file:
+        json_dict = json.load(json_file)
+
+    current_texts = []
+    for audio_chunk in json_dict:
+        current_texts.append(audio_chunk["content"])
+        
+    if len(current_texts) > 0:
+        req = requests.post("http://0.0.0.0:7997/embeddings", json={"input": current_texts, "model": TRANSFORMER})  #encode texts infinity api
+        if req.status_code == 200:
+            doc_emb = req.json()["data"]
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+            for i, text in enumerate(current_texts):
+                currentMetadata = json_dict[i]["meta"]
+                if metadata:
+                    currentMetadata.update(metadata)
+                currentMetadata.update({"timestamp":dt_string})
+                docs.append(Document(content=text, meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
     if len(docs) > 0:
         document_store.write_documents(docs)
 
@@ -372,6 +423,34 @@ def delete_documents(filters: FilterRequest):
     document_store.delete_documents(document_ids=ids)
     return True
 
+@app.post("/audio/upload/", tags=["audio"])
+def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(...)):
+    """
+    This endpoint accepts audio in .mp3 formmat. It only can be parsed by "\\n" character.
+    
+    `TODO: Add support for other parsing options.`
+    
+    Metadata example for each file added: `{"name": ["some", "more"], "category": ["only_one"]}`    OR    empty
+    """
+    #
+    #https://stackoverflow.com/questions/63110848/how-do-i-send-list-of-dictionary-as-body-parameter-together-with-files-in-fastap
+    filenames =[]
+    for file in files:
+        if file.content_type == "audio/mpeg" :
+            audio_file = os.path.join(ROOT, file.filename)
+            if os.path.isfile(audio_file):
+                print('File exists')
+            else:               
+                with open(audio_file, "wb") as buffer:                
+                    shutil.copyfileobj(file.file, buffer)
+                    filenames.append(file.filename)
+                
+    background_tasks.add_task(audio_manager, filenames, metadata.metadata)
+
+        
+    return {"message":"Files uploaded correctly, processing..." , "filenames": [file for file in filenames]}
+
+    
 @app.post("/documents/upload/", tags=["docs"])
 def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(...)):
     """
@@ -384,6 +463,7 @@ def upload_documents(files: Annotated[List[UploadFile], File(description="files"
     #
     #https://stackoverflow.com/questions/63110848/how-do-i-send-list-of-dictionary-as-body-parameter-together-with-files-in-fastap
     background_tasks.add_task(document_manager, copy.deepcopy(files), metadata.metadata)
+    #
 
         
     return {"message":"Files uploaded correctly, processing..." , "filenames": [file.filename for file in files]}
