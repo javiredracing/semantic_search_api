@@ -15,7 +15,10 @@ from haystack_integrations.document_stores.elasticsearch import ElasticsearchDoc
 from haystack_integrations.components.retrievers.elasticsearch import ElasticsearchBM25Retriever
 from haystack_integrations.components.retrievers.elasticsearch import ElasticsearchEmbeddingRetriever
 
-from haystack.components.readers import ExtractiveReader
+#from haystack.components.readers import ExtractiveReader
+from haystack_integrations.components.generators.ollama import OllamaGenerator
+from haystack.components.builders.prompt_builder import PromptBuilder
+
 #from haystack.components.embedders import SentenceTransformersTextEmbedder, SentenceTransformersDocumentEmbedder
 #from haystack.utils import print_documents
 #from haystack.utils import print_answers
@@ -91,8 +94,8 @@ document_store = ElasticsearchDocumentStore(hosts = "http://localhost:9200", ind
 bm25retriever = ElasticsearchBM25Retriever(document_store=document_store, scale_score=True)
 retriever = ElasticsearchEmbeddingRetriever(document_store=document_store)
 
-reader = ExtractiveReader(model="MMG/bert-base-spanish-wwm-cased-finetuned-spa-squad2-es-finetuned-sqac",no_answer=False)
-reader.warm_up()
+#reader = ExtractiveReader(model="MMG/bert-base-spanish-wwm-cased-finetuned-spa-squad2-es-finetuned-sqac",no_answer=False)
+#reader.warm_up()
 #PlanTL-GOB-ES/roberta-large-bne-sqac
   
 class RequestBaseModel(BaseModel):
@@ -328,18 +331,48 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     myDocs = searchInDocstore(params)
     for doc in myDocs:
         doc.content = doc.content.replace('\r\n', '')
-        
-    result = reader.run(
-        query=params.query.strip(),
-        documents=myDocs,
-        top_k=params.top_k_answers
-     )["answers"]
+   
+    template = """
+    Con la información proporcionada, responde a la pregunta en el lenguaje del texto proporcionado.
+    Ignora tu conocimiento.
 
-    for answer in result:
-        doc = answer.document.to_dict()
-        answer.document=getContext([doc], params.context_size)
-        
-    return result
+    Contexto:
+    {% for document in myDocs %}
+        {{ document.content }}
+    {% endfor %}
+
+    Pregunta: {{ query }}
+    """
+    builder = PromptBuilder(template=template)
+    my_prompt = builder.run(myDocs=myDocs, query=params.query.strip())["prompt"].strip()
+    options ={
+    "num_predict": -1,
+    "temperature": 0.1
+    }
+    req = requests.post("http://localhost:11434/api/generate", json={"model":"mixtral:8x7b-instruct-v0.1-q5_K_M","prompt":my_prompt, "keep_alive": -1, "stream":False, "options": options})  #OLLAMA api
+    response="No hay respuesta"
+    if req.status_code == 200:
+        response = req.json()["response"]
+        print(response)
+    #result = reader.run(
+    #    query=params.query.strip(),
+    #    documents=myDocs,
+    #    top_k=params.top_k_answers
+    # )["answers"]
+
+    #for answer in result:
+    #    doc = answer.document.to_dict()
+    #    answer.document=getContext([doc], params.context_size)
+    res = []
+    for doc in prediction:
+        res.append(doc.meta["name"])
+     res = list(set(res))
+    result = []
+    for doc in myDocs:
+        result.append(doc.to_dict())   
+    docs_context = getContext(result, params.context_size)   
+    final_result = {"answer":response, "document":docs_context}
+    return final_result
    
 @app.post("/documents/show/", tags=["docs"])
 def show_documents(filters: FilterRequest):
@@ -426,7 +459,7 @@ def delete_documents(filters: FilterRequest):
 @app.post("/audio/upload/", tags=["audio"])
 def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(...)):
     """
-    This endpoint accepts audio in .mp3 formmat. It only can be parsed by "\\n" character.
+    This endpoint accepts audio in .mp3 format. It only can be parsed by "\\n" character.
     
     `TODO: Add support for other parsing options.`
     
