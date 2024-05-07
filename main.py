@@ -1,5 +1,6 @@
-from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Body
+from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Body, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.responses import PlainTextResponse
 #from typing_extensions import Annotated
 from pydantic import BaseModel, Extra, Field, model_validator
 #from sentence_transformers import SentenceTransformer
@@ -49,6 +50,10 @@ tags_metadata = [
     {
         "name": "audio",
         "description": "Manage audio",
+    },
+    {
+        "name": "utils",
+        "description": "Helpful utilities",
     },
 ]
 
@@ -125,6 +130,9 @@ class SearchQueryParam(FilterRequest):
 class AskQueryParams(SearchQueryParam):
     top_k_answers:int = Field(default=2,gt=0, le=50, description="Number of ask results")
 
+class AskFileName(RequestBaseModel):
+    file_name:str = Field(title="File name", max_length=1500, min_length=3)
+
 def document_manager(files, metadata):
     start = time.process_time()
     with concurrent.futures.ThreadPoolExecutor() as executor: # optimally defined number of threads
@@ -145,17 +153,18 @@ def document_manager(files, metadata):
 def audio_manager(files, metadata):
     
     start = time.process_time()
-    #2. launch process to generate srt, txt and json outputs in audio path
+    #1. launch process to generate srt, txt and json outputs in audio path
     for i,file in enumerate(files):
-        p = subprocess.run(["/home/administrador/whisper-diarization/venv/bin/python3", "/home/administrador/whisper-diarization/diarize_parallel.py", "-a", file, "--no-stem", "--whisper-model", "large-v3", "--device", "cuda", "--language", "es", "--batch-size", "32"])                        
+        p = subprocess.run(["/home/administrador/whisper-diarization/venv/bin/python3", "/home/administrador/whisper-diarization/diarize_parallel.py", "-a", file[0], "--no-stem", "--whisper-model", "large-v3", "--device", "cuda", "--language", "es", "--batch-size", "32"])                        
 
-    #3. read json outputs from audio path, encode and upload to database as documents
+    #2. read json outputs from audio path, encode and upload to database as documents
     with concurrent.futures.ThreadPoolExecutor() as executor: # optimally defined number of threads
         for i,file in enumerate(files):
-            meta = None
+            meta = {"file_type":file[1]}
+            
             if metadata and len(metadata) > i:
-                meta = metadata[i]
-            executor.submit(processSRT_json, file, meta)
+                meta.update(metadata[i])
+            executor.submit(processSRT_json, file[0], meta)
             #processSRT_json(file,meta)
     end = time.process_time()
     print("Processing time:",end - start)
@@ -170,7 +179,7 @@ def processFile(file, ext, metadata):
             now = datetime.now()
             dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
             for i, text in enumerate(texts):
-                currentMetadata = {'name': file.filename, "paragraph":i, "timestamp":dt_string}
+                currentMetadata = {"name": file.filename, "paragraph":i, "timestamp":dt_string, "file_type":file.content_type}
                 if metadata:
                     currentMetadata.update(metadata)
                 if len(pages) == len(texts):
@@ -184,6 +193,7 @@ def processFile(file, ext, metadata):
         document_store.write_documents(docs)
 
 def processSRT_json(file,metadata):
+    print(file,metadata)
     docs = []
     filename = file.split(".")
     audio_file = os.path.join(ROOT, filename[0]+".json")
@@ -202,8 +212,8 @@ def processSRT_json(file,metadata):
             dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
             for i, text in enumerate(current_texts):
                 currentMetadata = json_dict[i]["meta"]
-                if metadata:
-                    currentMetadata.update(metadata)
+                
+                currentMetadata.update(metadata)
                 currentMetadata.update({"timestamp":dt_string})
                 docs.append(Document(content=text, meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
     if len(docs) > 0:
@@ -261,7 +271,6 @@ def getContext(docs, context_size):
                     
      return docs
 
- 
 @app.get("/")
 def main():
     content = """
@@ -345,15 +354,12 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     """
     builder = PromptBuilder(template=template)
     my_prompt = builder.run(myDocs=myDocs, query=params.query.strip())["prompt"].strip()
-    options ={
-    "num_predict": -1,
-    "temperature": 0.1
-    }
-    req = requests.post("http://localhost:11434/api/generate", json={"model":"mixtral:8x7b-instruct-v0.1-q5_K_M","prompt":my_prompt, "keep_alive": -1, "stream":False, "options": options})  #OLLAMA api
+    options ={"num_predict": -1,"temperature": 0.1}
+    req = requests.post("http://localhost:11434/api/generate", json={"model":"llama3:8b-instruct-fp16","prompt":my_prompt, "keep_alive": -1, "stream":False, "options": options})  #OLLAMA api
     response="No hay respuesta"
     if req.status_code == 200:
         response = req.json()["response"]
-        print(response)
+        #print(response)
     #result = reader.run(
     #    query=params.query.strip(),
     #    documents=myDocs,
@@ -363,10 +369,6 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     #for answer in result:
     #    doc = answer.document.to_dict()
     #    answer.document=getContext([doc], params.context_size)
-    res = []
-    for doc in prediction:
-        res.append(doc.meta["name"])
-     res = list(set(res))
     result = []
     for doc in myDocs:
         result.append(doc.to_dict())   
@@ -423,6 +425,7 @@ def list_documents_name(filters: FilterRequest):
                        }
                   }
     """
+     print(filters.filters)
      prediction = document_store.filter_documents(filters=filters.filters)
      
      res = []
@@ -450,14 +453,85 @@ def delete_documents(filters: FilterRequest):
     			   }
   		      }
     """
+    if not filters.filters:
+        prediction = document_store.filter_documents(filters=filters.filters)
+        ids = [doc.id for doc in prediction]
+        document_store.delete_documents(document_ids=ids)
+        return True
+    else:
+        raise HTTPException(status_code=404, detail="Empty file name!") 
+
+@app.get("/documents/get_summary/", tags=["utils"], response_class=PlainTextResponse)  
+def get_summary(file_name: str):
+    filters = {"field": "meta.name", "operator": "==", "value": file_name}
+    prediction = document_store.filter_documents(filters=filters)
     
-    prediction = document_store.filter_documents(filters=filters.filters)
-    ids = [doc.id for doc in prediction]
-    document_store.delete_documents(document_ids=ids)
-    return True
+    if len(prediction) > 0:
+        orderedlist = sorted(prediction, key=lambda doc: doc.meta['paragraph']) #order by paragraph
+        custom_docs = ""
+        current_speaker = ""
+        for doc in orderedlist:               
+            if doc.meta["file_type"].startswith("audio/"): 
+                if doc.meta['speaker'] != current_speaker:
+                    if current_speaker != "" and not custom_docs.strip().endswith((".",",","!","?",";")):
+                        custom_docs = custom_docs.strip() + "."
+                    custom_docs += f"\n\n- {doc.meta['speaker']}: " 
+                    current_speaker = doc.meta['speaker']
+            else:
+                if not custom_docs.strip().endswith((".",",","!","?",";")) and doc.meta['paragraph'] != 0:
+                    custom_docs = custom_docs.strip() + "."
+                custom_docs+= "\n\n"
+            custom_docs += f"{doc.content} "
+        
+        if not custom_docs.strip().endswith((".",",","!","?",";")):
+            custom_docs = custom_docs.strip() + "."
+        
+
+        template= '''
+        Haz una nota de prensa del siguiente rueda de prensa donde intervienen varios speakers. No te inventes nada.
+        
+        Rueda de prensa:
+        
+        {{myDocs}}
+        
+        Nota de prensa:
+        '''
+        
+        builder = PromptBuilder(template=template)
+        #my_prompt = builder.run(myDocs=custom_docs)["prompt"].strip()
+        my_prompt = builder.run(myDocs=custom_docs)["prompt"].strip()
+        options ={"num_predict": -1,"temperature": 0.7}
+        req = requests.post("http://localhost:11434/api/generate", json={"model":"llama3:8b-instruct-fp16","prompt":my_prompt, "keep_alive":-1, "stream":False, "options": options})
+        if req.status_code == 200:
+            return req.json()["response"]
+        else:
+            raise HTTPException(status_code=204, detail="Error generating summary") 
+    else:
+        raise HTTPException(status_code=404, detail="File not found!")
+
+@app.get("/audio/get_SRT/", tags=["audio"], response_class=PlainTextResponse)  
+def get_SRT(file_name: str):
+    """
+    This endpoint get the srt file referred to a specific audio file that  have been processed previously.
+    """
+    filters = {"field": "meta.name", "operator": "==", "value": file_name}
+    prediction = document_store.filter_documents(filters=filters)
+    if len(prediction) > 0:
+        orderedlist = sorted(prediction, key=lambda d: d.meta['paragraph']) #order by paragraph
+        srt_file = ""
+        for i, doc in enumerate(orderedlist, start=1):
+            if doc.meta["file_type"].startswith("audio/"):
+                srt_file += f"{i}\n"
+                text1=f"{doc.meta['start_time']} --> {doc.meta['end_time']}\n"
+                srt_file += text1
+                text1 = f"{doc.meta['speaker']}: {doc.content}\n\n"
+                srt_file += text1
+        return srt_file
+    else:
+        raise HTTPException(status_code=404, detail="File not found!") 
 
 @app.post("/audio/upload/", tags=["audio"])
-def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(...)):
+def upload_audios(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(...)):
     """
     This endpoint accepts audio in .mp3 format. It only can be parsed by "\\n" character.
     
@@ -469,19 +543,19 @@ def upload_documents(files: Annotated[List[UploadFile], File(description="files"
     #https://stackoverflow.com/questions/63110848/how-do-i-send-list-of-dictionary-as-body-parameter-together-with-files-in-fastap
     filenames =[]
     for file in files:
-        if file.content_type == "audio/mpeg" :
+        if file.content_type.startswith("audio/"):
             audio_file = os.path.join(ROOT, file.filename)
             if os.path.isfile(audio_file):
                 print('File exists')
             else:               
                 with open(audio_file, "wb") as buffer:                
                     shutil.copyfileobj(file.file, buffer)
-                    filenames.append(file.filename)
+                    filenames.append((file.filename, file.content_type))    
                 
     background_tasks.add_task(audio_manager, filenames, metadata.metadata)
 
         
-    return {"message":"Files uploaded correctly, processing..." , "filenames": [file for file in filenames]}
+    return {"message":"Files uploaded correctly, processing..." , "filenames": [file[0] for file in filenames]}
 
     
 @app.post("/documents/upload/", tags=["docs"])
