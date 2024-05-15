@@ -259,7 +259,6 @@ def getContext(docs, context_size):
             context_list = min_paragrah + max_paragraph
             current_filters = {"operator": "AND", 
             "conditions": [{"field": "meta.name", "operator": "==", "value": doc["name"]},{"field": "meta.paragraph", "operator": "in", "value": context_list},]}
-            #getDocuments = document_store.filter_documents(filters={"name":doc["name"], "paragraph": context_list})
             getDocuments = document_store.filter_documents(filters=current_filters)
             doc["before_context"] = []
             doc["after_context"] = []
@@ -366,9 +365,6 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     #    top_k=params.top_k_answers
     # )["answers"]
 
-    #for answer in result:
-    #    doc = answer.document.to_dict()
-    #    answer.document=getContext([doc], params.context_size)
     result = []
     for doc in myDocs:
         result.append(doc.to_dict())   
@@ -463,7 +459,7 @@ def delete_documents(filters: FilterRequest):
 
 @app.get("/documents/get_summary/", tags=["utils"], response_class=PlainTextResponse)  
 def get_summary(file_name: str):
-    filters = {"field": "meta.name", "operator": "==", "value": file_name}
+    filters = {"field": "meta.name", "operator": "==", "value": file_name.strip()}
     prediction = document_store.filter_documents(filters=filters)
     
     if len(prediction) > 0:
@@ -488,9 +484,8 @@ def get_summary(file_name: str):
         
 
         template= '''
-        Haz una nota de prensa del siguiente rueda de prensa donde intervienen varios speakers. No te inventes nada.
-        
-        Rueda de prensa:
+        Escribe ua nota de prensa concisa y clara que capture los puntos más importantes de la conferencia. No te inventes nada.
+        Conferencia de prensa:
         
         {{myDocs}}
         
@@ -498,7 +493,6 @@ def get_summary(file_name: str):
         '''
         
         builder = PromptBuilder(template=template)
-        #my_prompt = builder.run(myDocs=custom_docs)["prompt"].strip()
         my_prompt = builder.run(myDocs=custom_docs)["prompt"].strip()
         options ={"num_predict": -1,"temperature": 0.7}
         req = requests.post("http://localhost:11434/api/generate", json={"model":"llama3:8b-instruct-fp16","prompt":my_prompt, "keep_alive":-1, "stream":False, "options": options})
@@ -514,7 +508,7 @@ def get_SRT(file_name: str):
     """
     This endpoint get the srt file referred to a specific audio file that  have been processed previously.
     """
-    filters = {"field": "meta.name", "operator": "==", "value": file_name}
+    filters = {"field": "meta.name", "operator": "==", "value": file_name.strip()}
     prediction = document_store.filter_documents(filters=filters)
     if len(prediction) > 0:
         orderedlist = sorted(prediction, key=lambda d: d.meta['paragraph']) #order by paragraph
