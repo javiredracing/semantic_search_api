@@ -29,6 +29,8 @@ from lib.ProcessText import *
 import json
 import time
 
+#LLM_MODEL = "mixtral:8x7b-instruct-v0.1-q5_K_M"
+LLM_MODEL = "llama3:8b-instruct-fp16"
 ROOT = '/home/administrador/audio'
 tags_metadata = [
   #  {
@@ -52,8 +54,8 @@ tags_metadata = [
         "description": "Manage audio",
     },
     {
-        "name": "utils",
-        "description": "Helpful utilities",
+        "name": "agents",
+        "description": "Helpful tasks",
     },
 ]
 
@@ -187,7 +189,7 @@ def processFile(file, ext, metadata):
                 elif len(pages) == 1:
                     currentMetadata.update({"page":pages[0]})
                 
-                docs.append(Document(content=text, meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
+                docs.append(Document(content=text.replace("\"", "\'"), meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
                 
     if len(docs) > 0:
         document_store.write_documents(docs)
@@ -215,7 +217,7 @@ def processSRT_json(file,metadata):
                 
                 currentMetadata.update(metadata)
                 currentMetadata.update({"timestamp":dt_string})
-                docs.append(Document(content=text, meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
+                docs.append(Document(content=text.replace("\"", "\'"), meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
     if len(docs) > 0:
         document_store.write_documents(docs)
 
@@ -269,6 +271,14 @@ def getContext(docs, context_size):
                     doc["after_context"].append(context.content)
                     
      return docs
+
+def launchAgent(prompt, options):
+    req = requests.post("http://localhost:11434/api/generate", json={"model":LLM_MODEL,"prompt":prompt, "system":"Eres un asistente muy obediente.","keep_alive":-1, "stream":False, "options": options})
+    if req.status_code == 200:
+        return req.json()["response"]
+    else:
+        print("error")
+        raise HTTPException(status_code=204, detail="Error generating summary") 
 
 @app.get("/")
 def main():
@@ -345,6 +355,7 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     Ignora tu conocimiento.
 
     Contexto:
+    
     {% for document in myDocs %}
         {{ document.content }}
     {% endfor %}
@@ -354,7 +365,7 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     builder = PromptBuilder(template=template)
     my_prompt = builder.run(myDocs=myDocs, query=params.query.strip())["prompt"].strip()
     options ={"num_predict": -1,"temperature": 0.1}
-    req = requests.post("http://localhost:11434/api/generate", json={"model":"llama3:8b-instruct-fp16","prompt":my_prompt, "keep_alive": -1, "stream":False, "options": options})  #OLLAMA api
+    req = requests.post("http://localhost:11434/api/generate", json={"model":LLM_MODEL,"prompt":my_prompt, "keep_alive": -1, "stream":False, "options": options})  #OLLAMA api
     response="No hay respuesta"
     if req.status_code == 200:
         response = req.json()["response"]
@@ -457,8 +468,11 @@ def delete_documents(filters: FilterRequest):
     else:
         raise HTTPException(status_code=404, detail="Empty file name!") 
 
-@app.get("/documents/get_summary/", tags=["utils"], response_class=PlainTextResponse)  
-def get_summary(file_name: str):
+#@app.get("/agents/get_press_article/", tags=["agents"], response_class=PlainTextResponse)  
+def get_press_article(file_name: str):
+    """
+    Escribe una nota de prensa concisa y clara que capture los puntos más importantes.
+    """
     filters = {"field": "meta.name", "operator": "==", "value": file_name.strip()}
     prediction = document_store.filter_documents(filters=filters)
     
@@ -482,10 +496,10 @@ def get_summary(file_name: str):
         if not custom_docs.strip().endswith((".",",","!","?",";")):
             custom_docs = custom_docs.strip() + "."
         
-
+        
         template= '''
-        Escribe ua nota de prensa concisa y clara que capture los puntos más importantes de la conferencia. No te inventes nada.
-        Conferencia de prensa:
+        Escribe una nota de prensa concisa y clara que capture los puntos más importantes del siguiente contexto. No te inventes nada.
+        Contexto:
         
         {{myDocs}}
         
@@ -494,15 +508,15 @@ def get_summary(file_name: str):
         
         builder = PromptBuilder(template=template)
         my_prompt = builder.run(myDocs=custom_docs)["prompt"].strip()
-        options ={"num_predict": -1,"temperature": 0.7}
-        req = requests.post("http://localhost:11434/api/generate", json={"model":"llama3:8b-instruct-fp16","prompt":my_prompt, "keep_alive":-1, "stream":False, "options": options})
+        options ={"num_predict": -1,"temperature": 0.7,"num_ctx":8192}
+        req = requests.post("http://localhost:11434/api/generate", json={"model":LLM_MODEL,"prompt":my_prompt, "keep_alive":-1, "stream":False, "options": options})
         if req.status_code == 200:
             return req.json()["response"]
         else:
             raise HTTPException(status_code=204, detail="Error generating summary") 
     else:
         raise HTTPException(status_code=404, detail="File not found!")
-
+        
 @app.get("/audio/get_SRT/", tags=["audio"], response_class=PlainTextResponse)  
 def get_SRT(file_name: str):
     """
@@ -523,6 +537,83 @@ def get_SRT(file_name: str):
         return srt_file
     else:
         raise HTTPException(status_code=404, detail="File not found!") 
+
+@app.get("/audio/get_SRT_traslated/", tags=["audio"], response_class=PlainTextResponse) 
+def get_SRT_traslated(file_name: str, lang:str):
+    """
+    This endpoint get the srt file referred to a specific audio file that have been processed previously, traslated into a defined language. The language param admit most commons languages.
+    Ej: Español, inglés, alemán, italiano, francés,...
+    """
+    filters = {"field": "meta.name", "operator": "==", "value": file_name.strip()}
+    prediction = document_store.filter_documents(filters=filters)
+    if len(prediction) > 0:
+        orderedlist = sorted(prediction, key=lambda d: d.meta['paragraph']) #order by paragraph
+        #print("total docs",len(orderedlist))
+        template="""
+La siguiente lista contiene textos:
+
+{{srt_file}}
+
+Responde con una lista con cada texto traducido al idioma {{lang}}, en el mismo orden y con igual formato que la lista original. No te inventes nada.
+
+Ejemplo respuesta:
+
+1- Hello world.
+
+2- A long sentence to translate.
+
+"""
+
+        builder = PromptBuilder(template=template)
+        options ={"num_predict": -1,"temperature": 0.1,"num_ctx":8192,"top_p":0.1}
+        
+        prompt_list = []
+        srt_file = ""
+        count = 0
+        for i, doc in enumerate(orderedlist):
+            if doc.meta["file_type"].startswith("audio/"):
+                my_doc_mod= doc.content.replace("\n","").replace('"',"'")
+                if not my_doc_mod.strip().endswith((".",",","!","?",";")):
+                    my_doc_mod += "..."
+                srt_file += f"{str(i)}- {my_doc_mod.capitalize()}\n\n"
+                count += len(doc.content)
+                if count >= 1500: #6000 chars is aprox 1500 tokens
+                    my_prompt = builder.run(lang=lang, srt_file=srt_file)["prompt"].strip()
+                    prompt_list.append(my_prompt)
+                    srt_file = ""
+                    count = 0
+        
+        if len(srt_file) > 0:
+            my_prompt = builder.run(lang=lang, srt_file=srt_file)["prompt"].strip()
+            prompt_list.append(my_prompt)            
+          
+        srt_file = []
+        for prompt in prompt_list:
+            agent_result = launchAgent(prompt, options)
+            data = agent_result.split("\n")
+            #print(data)
+            final_list = [i for i in data if i]
+            for item in final_list[1:]:
+                x = item.find("-")
+                if x >= 1 and (x + 1) < len(item):
+                    srt_file.append(item[(x+1):].strip())
+
+#        print("total traslated paragraphs",len(srt_file))
+        plain_res = ""
+        for i, doc in enumerate(orderedlist):
+            if doc.meta["file_type"].startswith("audio/"):
+                plain_res += f"{str(i+1)}\n"
+                text1=f"{doc.meta['start_time']} --> {doc.meta['end_time']}\n"
+                plain_res += text1
+                if i < len(srt_file):
+                    text1 = f"{doc.meta['speaker']}: {srt_file[i]}\n\n"
+                else:
+                    text1 = f"{doc.meta['speaker']}: --"
+                plain_res += text1
+                
+        return plain_res
+    else:
+        raise HTTPException(status_code=404, detail="File not found!")
 
 @app.post("/audio/upload/", tags=["audio"])
 def upload_audios(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(...)):
