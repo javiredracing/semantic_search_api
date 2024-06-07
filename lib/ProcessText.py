@@ -11,6 +11,7 @@ class ProcessText:
     VALID_FORMATS_FITZ = ["pdf","xps", "epub", "mobi", "fb2", "cbz", "svg"]
     VALID_FORMATS = ["txt"]
     DOCS_FORMAT = ["docx"]
+    SRT_FORMAT = "srt"
     
     @staticmethod
     def check_if_header(pages):
@@ -83,6 +84,11 @@ class ProcessText:
             plain_text = bytesFile.decode("utf-8").strip()
             txt_formatted = ProcessText.remove_header_footer(plain_text)
             splitted_text, text_pages = ProcessText.chunk_text(txt_formatted) #fix text 
+        
+        elif fileType in ProcessText.SRT_FORMAT:
+            plain_text = bytesFile.decode("utf-8").strip()
+            text_pages.append(1)
+            splitted_text = [plain_text]
             
         elif fileType in ProcessText.DOCS_FORMAT:
             splitted_text = ProcessText.readFileDocx(bytesFile)

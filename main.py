@@ -17,7 +17,7 @@ from haystack_integrations.components.retrievers.elasticsearch import Elasticsea
 from haystack_integrations.components.retrievers.elasticsearch import ElasticsearchEmbeddingRetriever
 
 #from haystack.components.readers import ExtractiveReader
-from haystack_integrations.components.generators.ollama import OllamaGenerator
+#from haystack_integrations.components.generators.ollama import OllamaGenerator
 from haystack.components.builders.prompt_builder import PromptBuilder
 
 #from haystack.components.embedders import SentenceTransformersTextEmbedder, SentenceTransformersDocumentEmbedder
@@ -31,7 +31,8 @@ import time
 
 #LLM_MODEL = "mixtral:8x7b-instruct-v0.1-q5_K_M"
 LLM_MODEL = "llama3:8b-instruct-fp16"
-ROOT = '/home/administrador/audio'
+#LLM_MODEL = "phi3:14b-medium-128k-instruct-f16"
+
 tags_metadata = [
   #  {
   #      "name": "Question/answer docs",
@@ -65,8 +66,8 @@ tags_metadata = [
 TRANSFORMER = 'intfloat/multilingual-e5-large-instruct'
 #model = SentenceTransformer(TRANSFORMER,device="cuda")
 #print(model)
-SERVER_URL=""
-AUDIO_PATH="/home/administrador/audio"
+AUDIO_TRANSCRIBE_SERVER="http://0.0.0.0:8080/transcribe"
+AUDIO_PATH="/home/administrador/audio2"
 
 description = """
 Ask questions about the documents provided. 🚀
@@ -123,6 +124,18 @@ class InputParams(RequestBaseModel):
         if isinstance(value, str):
             return cls(**json.loads(value))
         return value
+
+class InputSRT(InputParams):
+    text:str = Field(title="SRT text")
+    filename:str = Field(title="File name")
+    metadata: Optional[dict]= None   
+        
+    @model_validator(mode='before')
+    @classmethod
+    def validate_to_json(cls, value):
+        if isinstance(value, str):
+            return cls(**json.loads(value))
+        return value
         
 class SearchQueryParam(FilterRequest):
     query:str = Field(title="Query max length 1500 chars", max_length=1500)
@@ -154,26 +167,37 @@ def document_manager(files, metadata):
 
 def audio_manager(files, metadata):
     
-    start = time.process_time()
-    #1. launch process to generate srt, txt and json outputs in audio path
-    for i,file in enumerate(files):
-        p = subprocess.run(["/home/administrador/whisper-diarization/venv/bin/python3", "/home/administrador/whisper-diarization/diarize_parallel.py", "-a", file[0], "--no-stem", "--whisper-model", "large-v3", "--device", "cuda", "--language", "es", "--batch-size", "32"])                        
+    # start = time.process_time()
+    # #1. launch process to generate srt, txt and json outputs in audio path
+    # for i,file in enumerate(files):
+        # p = subprocess.run(["/home/administrador/whisper-diarization/venv/bin/python3", "/home/administrador/whisper-diarization/diarize_parallel.py", "-a", file[0], "--no-stem", "--whisper-model", "large-v3", "--device", "cuda", "--language", "es", "--batch-size", "32"])                        
 
-    #2. read json outputs from audio path, encode and upload to database as documents
-    with concurrent.futures.ThreadPoolExecutor() as executor: # optimally defined number of threads
-        for i,file in enumerate(files):
-            meta = {"file_type":file[1]}
+    # #2. read json outputs from audio path, encode and upload to database as documents
+    # with concurrent.futures.ThreadPoolExecutor() as executor: # optimally defined number of threads
+        # for i,file in enumerate(files):
+            # meta = {"file_type":file[1]}
             
-            if metadata and len(metadata) > i:
-                meta.update(metadata[i])
-            executor.submit(processSRT_json, file[0], meta)
-            #processSRT_json(file,meta)
-    end = time.process_time()
-    print("Processing time:",end - start)
+            # if metadata and len(metadata) > i:
+                # meta.update(metadata[i])
+            # executor.submit(processSRT_json, file[0], meta)
+            # #processSRT_json(file,meta)
+    # end = time.process_time()
+    # print("Processing time:",end - start)
+    if len(files) > 0:        
+        req = requests.post(AUDIO_TRANSCRIBE_SERVER, json={"audio_files": files})  #transcribe audio files
+        if req.status_code == 200:
+            #doc_emb = req.json()["data"]
+            print("OK")
 
 def processFile(file, ext, metadata):
     docs = []
-    texts, pages = ProcessText.readFile(file.file.read(),ext)               
+    texts, pages = ProcessText.readFile(file.file.read(),ext)
+    if ext == ProcessText.SRT_FORMAT:
+        generateSRT_doc(file.filename, texts[0], metadata)
+    else:
+        generate_doc(texts, metadata, pages)
+        
+def generate_doc(texts, metadata, pages):
     if len(texts) > 0:        
         req = requests.post("http://0.0.0.0:7997/embeddings", json={"input": texts, "model": TRANSFORMER})  #encode texts infinity api
         if req.status_code == 200:
@@ -194,16 +218,38 @@ def processFile(file, ext, metadata):
     if len(docs) > 0:
         document_store.write_documents(docs)
 
-def processSRT_json(file,metadata):
-    print(file,metadata)
-    docs = []
-    filename = file.split(".")
-    audio_file = os.path.join(ROOT, filename[0]+".json")
-    with open(audio_file, encoding='utf-8-sig') as json_file:
-        json_dict = json.load(json_file)
-
+#plain text srt to dict        
+def parseSRT(texts):
+    splitted_srt = texts.strip().split("\n\n")
+    splitted_srt = [x for x in splitted_srt if x.strip()] #remove whites
     current_texts = []
-    for audio_chunk in json_dict:
+    #split srt file
+    for i, chunk in enumerate(splitted_srt, start=1):
+        splitted_chunk = chunk.split("\n")
+        if len(splitted_chunk) > 2:
+            time = splitted_chunk[1].split("-->")
+            start_time = time[0].strip()
+            end_time = time[1].strip()
+            content = ""
+            for text_chunk in splitted_chunk[2:]:
+                content += text_chunk + " "
+            index_char = content.find(":")
+            speaker = ""
+            if index_char > 0 and index_char < 20 and len(content) > 0 and len(content) > (index_char + 1):
+                speaker = content[0:index_char].strip()
+                content = content[(index_char + 1):]
+            current_texts.append({"content":content.strip(), "metadata":{"paragraph":i, "start_time":start_time, "end_time":end_time, "speaker":speaker}})
+
+    return current_texts
+
+def generateSRT_doc(filename, srt_text, metadata):
+    print(filename,metadata)
+    srt_json = parseSRT(srt_text)
+    
+    docs = []
+    
+    current_texts = []
+    for audio_chunk in srt_json:
         current_texts.append(audio_chunk["content"])
         
     if len(current_texts) > 0:
@@ -213,10 +259,10 @@ def processSRT_json(file,metadata):
             now = datetime.now()
             dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
             for i, text in enumerate(current_texts):
-                currentMetadata = json_dict[i]["meta"]
+                currentMetadata = srt_json[i]["metadata"]
                 
                 currentMetadata.update(metadata)
-                currentMetadata.update({"timestamp":dt_string})
+                currentMetadata.update({"timestamp":dt_string, "page":1, "name":filename, "file_type":"audio/"})
                 docs.append(Document(content=text.replace("\"", "\'"), meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
     if len(docs) > 0:
         document_store.write_documents(docs)
@@ -365,17 +411,18 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     builder = PromptBuilder(template=template)
     my_prompt = builder.run(myDocs=myDocs, query=params.query.strip())["prompt"].strip()
     options ={"num_predict": -1,"temperature": 0.1}
-    req = requests.post("http://localhost:11434/api/generate", json={"model":LLM_MODEL,"prompt":my_prompt, "keep_alive": -1, "stream":False, "options": options})  #OLLAMA api
+    #req = requests.post("http://localhost:11434/api/generate", json={"model":LLM_MODEL,"prompt":my_prompt, "keep_alive": -1, "stream":False, "options": options})  #OLLAMA api
     response="No hay respuesta"
-    if req.status_code == 200:
-        response = req.json()["response"]
+    #if req.status_code == 200:
+    #    response = req.json()["response"]
+    
         #print(response)
     #result = reader.run(
     #    query=params.query.strip(),
     #    documents=myDocs,
     #    top_k=params.top_k_answers
     # )["answers"]
-
+    response=launchAgent(my_prompt, options)
     result = []
     for doc in myDocs:
         result.append(doc.to_dict())   
@@ -468,52 +515,62 @@ def delete_documents(filters: FilterRequest):
     else:
         raise HTTPException(status_code=404, detail="Empty file name!") 
 
-#@app.get("/agents/get_press_article/", tags=["agents"], response_class=PlainTextResponse)  
-def get_press_article(file_name: str):
+@app.get("/agents/summarize/", tags=["agents"], response_class=PlainTextResponse)  
+def get_summary(file_name: str):
     """
-    Escribe una nota de prensa concisa y clara que capture los puntos más importantes.
+    Devuelve un resumen que captura los puntos más importantes.
     """
     filters = {"field": "meta.name", "operator": "==", "value": file_name.strip()}
     prediction = document_store.filter_documents(filters=filters)
+    
+    template= '''
+    Haz un resumen conciso y claro que capture los puntos más importantes del siguiente contexto. No te inventes nada. Responde solo con el resumen. Si no puedes hacerlo, no pongas nada.
+    Contexto:
+    {{myDocs}}
+    
+    Resumen:
+    '''
+    
+    builder = PromptBuilder(template=template)
+   
+    options ={"num_predict": -1,"temperature": 0.1,"num_ctx":8192}
     
     if len(prediction) > 0:
         orderedlist = sorted(prediction, key=lambda doc: doc.meta['paragraph']) #order by paragraph
         custom_docs = ""
         current_speaker = ""
+        response = []
         for doc in orderedlist:               
             if doc.meta["file_type"].startswith("audio/"): 
                 if doc.meta['speaker'] != current_speaker:
                     if current_speaker != "" and not custom_docs.strip().endswith((".",",","!","?",";")):
-                        custom_docs = custom_docs.strip() + "."
+                        custom_docs = custom_docs.strip() + "..."
                     custom_docs += f"\n\n- {doc.meta['speaker']}: " 
                     current_speaker = doc.meta['speaker']
             else:
                 if not custom_docs.strip().endswith((".",",","!","?",";")) and doc.meta['paragraph'] != 0:
-                    custom_docs = custom_docs.strip() + "."
+                    custom_docs = custom_docs.strip() + "..."
                 custom_docs+= "\n\n"
+
             custom_docs += f"{doc.content} "
-        
+            
+            if len(custom_docs) > 3500:
+                if  doc.meta["file_type"].startswith("audio/"):
+                    current_speaker = ""
+                my_prompt = builder.run(myDocs=custom_docs)["prompt"].strip()
+                print(my_prompt)
+                custom_docs = ""
+                response.append("\n\n" + launchAgent(my_prompt, options))
+                 
+                
         if not custom_docs.strip().endswith((".",",","!","?",";")):
             custom_docs = custom_docs.strip() + "."
-        
-        
-        template= '''
-        Escribe una nota de prensa concisa y clara que capture los puntos más importantes del siguiente contexto. No te inventes nada.
-        Contexto:
-        
-        {{myDocs}}
-        
-        Nota de prensa:
-        '''
-        
-        builder = PromptBuilder(template=template)
-        my_prompt = builder.run(myDocs=custom_docs)["prompt"].strip()
-        options ={"num_predict": -1,"temperature": 0.7,"num_ctx":8192}
-        req = requests.post("http://localhost:11434/api/generate", json={"model":LLM_MODEL,"prompt":my_prompt, "keep_alive":-1, "stream":False, "options": options})
-        if req.status_code == 200:
-            return req.json()["response"]
-        else:
-            raise HTTPException(status_code=204, detail="Error generating summary") 
+        if len(custom_docs) > 0:
+            my_prompt = builder.run(myDocs=custom_docs)["prompt"].strip()
+            custom_docs = ""
+            response.append("\n\n" + launchAgent(my_prompt, options))
+
+        return  ''.join(response)
     else:
         raise HTTPException(status_code=404, detail="File not found!")
         
@@ -565,16 +622,14 @@ Ejemplo respuesta:
 """
 
         builder = PromptBuilder(template=template)
-        options ={"num_predict": -1,"temperature": 0.1,"num_ctx":8192,"top_p":0.1}
+        options ={"num_predict": -1,"temperature":0.1,"num_ctx":8192,"top_p":0.5}
         
         prompt_list = []
         srt_file = ""
         count = 0
         for i, doc in enumerate(orderedlist):
             if doc.meta["file_type"].startswith("audio/"):
-                my_doc_mod= doc.content.replace("\n","").replace('"',"'")
-                if not my_doc_mod.strip().endswith((".",",","!","?",";")):
-                    my_doc_mod += "..."
+                my_doc_mod= doc.content
                 srt_file += f"{str(i)}- {my_doc_mod.capitalize()}\n\n"
                 count += len(doc.content)
                 if count >= 1500: #6000 chars is aprox 1500 tokens
@@ -605,15 +660,30 @@ Ejemplo respuesta:
                 plain_res += f"{str(i+1)}\n"
                 text1=f"{doc.meta['start_time']} --> {doc.meta['end_time']}\n"
                 plain_res += text1
+                text1 = f"{doc.meta['speaker']}: {doc.content}\n"
+                plain_res += text1
                 if i < len(srt_file):
                     text1 = f"{doc.meta['speaker']}: {srt_file[i]}\n\n"
                 else:
-                    text1 = f"{doc.meta['speaker']}: --"
+                    text1 = f"{doc.meta['speaker']}: --\n\n"
                 plain_res += text1
+
                 
         return plain_res
     else:
         raise HTTPException(status_code=404, detail="File not found!")
+        
+
+@app.post("/documents/upload/plainSRT/", tags=["docs"])
+def upload_plain_srt(input_values:InputSRT, background_tasks: BackgroundTasks):
+    """
+    This endpoint accepts .srt files in plain text for processing.
+    File name required.
+    Metadata example for each file added: `{"user": ["some", "more"], "category": ["only_one"]}`    OR    empty
+    """
+    #print(input_values["text"])
+    background_tasks.add_task(generateSRT_doc, input_values.filename, input_values.text, input_values.metadata)
+    return {"message":"SRT plain text uploaded correctly, processing..." , "filenames":input_values.filename}
 
 @app.post("/audio/upload/", tags=["audio"])
 def upload_audios(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(...)):
@@ -629,7 +699,7 @@ def upload_audios(files: Annotated[List[UploadFile], File(description="files")],
     filenames =[]
     for file in files:
         if file.content_type.startswith("audio/"):
-            audio_file = os.path.join(ROOT, file.filename)
+            audio_file = os.path.join(AUDIO_PATH, file.filename)
             if os.path.isfile(audio_file):
                 print('File exists')
             else:               
@@ -646,7 +716,7 @@ def upload_audios(files: Annotated[List[UploadFile], File(description="files")],
 @app.post("/documents/upload/", tags=["docs"])
 def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(...)):
     """
-    This endpoint accepts documents in .doc, .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg and .txt format at this time. It only can be parsed by "\\n" character.
+    This endpoint accepts documents in .doc, .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg and .txt .srt format at this time. It only can be parsed by paragraphs.
     
     `TODO: Add support for other parsing options.`
     
