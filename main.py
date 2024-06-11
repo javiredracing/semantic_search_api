@@ -66,14 +66,20 @@ tags_metadata = [
 TRANSFORMER = 'intfloat/multilingual-e5-large-instruct'
 #model = SentenceTransformer(TRANSFORMER,device="cuda")
 #print(model)
-AUDIO_TRANSCRIBE_SERVER="http://0.0.0.0:8080/transcribe"
-AUDIO_PATH="/home/administrador/audio2"
+EMBEDDINGS_SERVER = "http://0.0.0.0:7997/"
+AUDIO_TRANSCRIBE_SERVER = "http://0.0.0.0:8080/"
+DATABASE_SERVER = "http://localhost:9200"
+OLLAMA_SERVER = "http://localhost:11434/"
+AUDIO_PATH = "/home/administrador/audio2"
 
-description = """
-Ask questions about the documents provided. 🚀
+
+description = """Ask questions about the documents provided. 🚀
 Model Max Sequence Length: **512**.
-Required infinity service (https://github.com/michaelfeil/infinity)
-"""
+Services required: 
+* infinity service (https://github.com/michaelfeil/infinity)
+* Elastic search service.
+* Ollama service.
+* Diarization service."""
 
 app = FastAPI(
     title="Semantic search service",
@@ -93,7 +99,7 @@ app = FastAPI(
     )
 
 #document_store = InMemoryDocumentStore(embedding_similarity_function="cosine", bm25_algorithm="BM25Plus")
-document_store = ElasticsearchDocumentStore(hosts = "http://localhost:9200", index="semantic_search")
+document_store = ElasticsearchDocumentStore(hosts = DATABASE_SERVER, index="semantic_search")
 
 #document_embedder = SentenceTransformersDocumentEmbedder(model=TRANSFORMER,  normalize_embeddings=True )  
 #document_embedder.warm_up()
@@ -111,9 +117,10 @@ class RequestBaseModel(BaseModel):
         # Forbid any extra fields in the request to avoid silent failures
         extra = Extra.forbid
         
-PrimitiveType = Union[str, int, float, bool]
+#PrimitiveType = Union[str, int, float, bool]
 class FilterRequest(RequestBaseModel):
-    filters: Optional[Dict[str, Union[PrimitiveType, List[PrimitiveType], Dict[str, PrimitiveType]]]] = None
+    #filters: Optional[Dict[str, Union[PrimitiveType, List[PrimitiveType], Dict[str, PrimitiveType]]]] = None
+    filters: Optional[Dict] = None
     
 class InputParams(RequestBaseModel):
     metadata: Optional[List[dict,]]= None   
@@ -183,11 +190,14 @@ def audio_manager(files, metadata):
             # #processSRT_json(file,meta)
     # end = time.process_time()
     # print("Processing time:",end - start)
-    if len(files) > 0:        
-        req = requests.post(AUDIO_TRANSCRIBE_SERVER, json={"audio_files": files})  #transcribe audio files
-        if req.status_code == 200:
-            #doc_emb = req.json()["data"]
-            print("OK")
+    if len(files) > 0:
+        try:
+            req = requests.post(AUDIO_TRANSCRIBE_SERVER + "transcribe", json={"audio_files": files})  #transcribe audio files
+            if req.status_code == 200:
+                #doc_emb = req.json()["data"]
+                print("OK")
+        except requests.exceptions.RequestException as e:
+            return "Error!"
 
 def processFile(file, ext, metadata):
     docs = []
@@ -198,23 +208,27 @@ def processFile(file, ext, metadata):
         generate_doc(texts, metadata, pages)
         
 def generate_doc(texts, metadata, pages):
-    if len(texts) > 0:        
-        req = requests.post("http://0.0.0.0:7997/embeddings", json={"input": texts, "model": TRANSFORMER})  #encode texts infinity api
-        if req.status_code == 200:
-            doc_emb = req.json()["data"]
-            now = datetime.now()
-            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-            for i, text in enumerate(texts):
-                currentMetadata = {"name": file.filename, "paragraph":i, "timestamp":dt_string, "file_type":file.content_type}
-                if metadata:
-                    currentMetadata.update(metadata)
-                if len(pages) == len(texts):
-                    currentMetadata.update({"page":pages[i]})
-                elif len(pages) == 1:
-                    currentMetadata.update({"page":pages[0]})
-                
-                docs.append(Document(content=text.replace("\"", "\'"), meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
-                
+    docs = []
+    if len(texts) > 0:
+        try:
+            req = requests.post(EMBEDDINGS_SERVER+"embeddings", json={"input": texts, "model": TRANSFORMER})  #encode texts infinity api
+            if req.status_code == 200:
+                doc_emb = req.json()["data"]
+                now = datetime.now()
+                dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+                for i, text in enumerate(texts):
+                    currentMetadata = {"name": file.filename, "paragraph":i, "timestamp":dt_string, "file_type":file.content_type}
+                    if metadata:
+                        currentMetadata.update(metadata)
+                    if len(pages) == len(texts):
+                        currentMetadata.update({"page":pages[i]})
+                    elif len(pages) == 1:
+                        currentMetadata.update({"page":pages[0]})
+                    
+                    docs.append(Document(content=text.replace("\"", "\'"), meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
+        except requests.exceptions.RequestException as e:
+            print("ERROR!")
+                #TODO set logging error
     if len(docs) > 0:
         document_store.write_documents(docs)
 
@@ -243,7 +257,7 @@ def parseSRT(texts):
     return current_texts
 
 def generateSRT_doc(filename, srt_text, metadata):
-    print(filename,metadata)
+    #print(filename,metadata)
     srt_json = parseSRT(srt_text)
     
     docs = []
@@ -253,17 +267,20 @@ def generateSRT_doc(filename, srt_text, metadata):
         current_texts.append(audio_chunk["content"])
         
     if len(current_texts) > 0:
-        req = requests.post("http://0.0.0.0:7997/embeddings", json={"input": current_texts, "model": TRANSFORMER})  #encode texts infinity api
-        if req.status_code == 200:
-            doc_emb = req.json()["data"]
-            now = datetime.now()
-            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-            for i, text in enumerate(current_texts):
-                currentMetadata = srt_json[i]["metadata"]
-                
-                currentMetadata.update(metadata)
-                currentMetadata.update({"timestamp":dt_string, "page":1, "name":filename, "file_type":"audio/"})
-                docs.append(Document(content=text.replace("\"", "\'"), meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
+        try:
+            req = requests.post(EMBEDDINGS_SERVER+"embeddings", json={"input": current_texts, "model": TRANSFORMER})  #encode texts infinity api
+            if req.status_code == 200:
+                doc_emb = req.json()["data"]
+                now = datetime.now()
+                dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+                for i, text in enumerate(current_texts):
+                    currentMetadata = srt_json[i]["metadata"]
+                    
+                    currentMetadata.update(metadata)
+                    currentMetadata.update({"timestamp":dt_string, "page":1, "name":filename, "file_type":"audio/"})
+                    docs.append(Document(content=text.replace("\"", "\'"), meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
+        except requests.exceptions.RequestException as e:
+            print("ERROR!")
     if len(docs) > 0:
         document_store.write_documents(docs)
 
@@ -284,14 +301,16 @@ def searchInDocstore(params):
         myquery=get_detailed_instruct(params.query.strip())
         #embedding_query = text_embedder.run(text=myquery)["embedding"]
         #embedding_query = model.encode(myquery, normalize_embeddings=True, show_progress_bar=True, device="cuda", batch_size=4)
-        req = requests.post("http://0.0.0.0:7997/embeddings", json={"input": myquery,"model": TRANSFORMER})    #encode query   
-    
-        if req.status_code == 200:            
-            query_embedding = req.json()["data"][0]["embedding"]
-            #prediction = document_store.embedding_retrieval(query_embedding=query_embedding, top_k=params.top_k, filters=params.filters, return_embedding=False)
-            prediction = retriever.run(query_embedding=query_embedding, top_k=params.top_k, filters=params.filters)["documents"]
-            for doc in prediction:
-               del doc.embedding
+        try:
+            req = requests.post(EMBEDDINGS_SERVER+"embeddings", json={"input": myquery,"model": TRANSFORMER})    #encode query           
+            if req.status_code == 200:            
+                query_embedding = req.json()["data"][0]["embedding"]
+                #prediction = document_store.embedding_retrieval(query_embedding=query_embedding, top_k=params.top_k, filters=params.filters, return_embedding=False)
+                prediction = retriever.run(query_embedding=query_embedding, top_k=params.top_k, filters=params.filters)["documents"]
+                for doc in prediction:
+                   del doc.embedding
+        except requests.exceptions.RequestException as e:
+            return None
     #print_documents(prediction, max_text_len=query.max_text_len, print_name=True, print_meta=True)
     return prediction
 
@@ -319,13 +338,21 @@ def getContext(docs, context_size):
      return docs
 
 def launchAgent(prompt, options):
-    req = requests.post("http://localhost:11434/api/generate", json={"model":LLM_MODEL,"prompt":prompt, "system":"Eres un asistente muy obediente.","keep_alive":-1, "stream":False, "options": options})
-    if req.status_code == 200:
-        return req.json()["response"]
-    else:
-        print("error")
-        raise HTTPException(status_code=204, detail="Error generating summary") 
-
+    try:
+        #req = requests.post(OLLAMA_SERVER+"api/generate", json={"model":LLM_MODEL,"prompt":prompt, "system":"Eres un asistente muy obediente.","keep_alive":-1, "stream":False, "options": options})
+        req = requests.post(OLLAMA_SERVER+"api/generate", json={"model":LLM_MODEL,"prompt":prompt, "keep_alive":-1, "stream":False, "options": options})
+        if req.status_code == 200:
+            return req.json()["response"]
+        #else:
+            #print("error")
+            #raise HTTPException(status_code=204, detail="Error generating summary") 
+        #    return None
+    except requests.exceptions.RequestException as e:
+        return None
+    
+    return None
+        
+    
 @app.get("/")
 def main():
     content = """
@@ -341,8 +368,55 @@ def main():
 @app.get("/status/")
 def check_status():
     #doc = document_store.describe_documents()
-    #print(doc)
-    return True
+    result = {}
+    try:
+        res = requests.get(EMBEDDINGS_SERVER + "models")
+        res.raise_for_status()        
+        result.update({"embeddings_status":res.json()})
+    except requests.exceptions.RequestException as e:
+        result.update({"embeddings_status":"ERROR! "+ str(e)})    
+   
+    try:
+        res = requests.get(DATABASE_SERVER+"/_cluster/health")
+        res.raise_for_status()
+        result.update({"db_status":res.json()})
+    except requests.exceptions.RequestException as e:  
+        result.update({"db_status":"ERROR! "} + str(e))
+    
+    try:    
+        res = requests.get(OLLAMA_SERVER+"api/ps")
+        res.raise_for_status()
+        result.update({"llm_status":res.json()})
+    except requests.exceptions.RequestException as e:  
+        result.update({"llm_status":"ERROR! " + str(e)})
+    
+    try:   
+        res = requests.get(AUDIO_TRANSCRIBE_SERVER+"status")
+        res.raise_for_status()
+        result.update({"diarization_status":res.json()})
+    except requests.exceptions.RequestException as e:  
+        result.update({"diarization_status":"ERROR! " +str(e)})
+
+    return result
+
+@app.get("/status/{audio_file}",tags=["audio"])
+async def get_audio_status(audio_file: str) -> dict:
+
+    '''Show status of a file audio in the transcription batch processing.
+    * audio_file is the current audio that may be in process
+    '''
+    result = {
+        "audio_file": audio_file,
+        "status": "ERROR!"
+    }
+    try:   
+        res = requests.get(AUDIO_TRANSCRIBE_SERVER+"status/" + audio_file)
+        res.raise_for_status()
+        result = res.json()
+    except requests.exceptions.RequestException as e:
+        result.update({"status":"ERROR! " +str(e)})
+        
+    return result
 
 
 @app.post("/search/", tags=["search"])
@@ -356,17 +430,20 @@ def search_document(params:Annotated[SearchQueryParam, Body(embed=True)]):
     
     To get all documents you should provide an empty dict, like:`'{"filters": {}}`
     
-    {"filters": { "operator": "AND",
+    `{"filters": { "operator": "AND",
       			"conditions": [
         			{"field": "meta.name", "operator": "==", "value": "2019"},
-        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]},
+        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]}
       					]
     			   }
-  		      }
+  		      }`
     """
     docs = searchInDocstore(params)
-
+    
     result = []
+    if docs is None:
+        return result
+
     for doc in docs:
         result.append(doc.to_dict())   
     docs_context = getContext(result, params.context_size)
@@ -383,16 +460,18 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     
     To get all documents you should provide an empty dict, like:`'{"filters": {}}`
     
-    {"filters": { "operator": "AND",
+    `{"filters": { "operator": "AND",
       			"conditions": [
         			{"field": "meta.name", "operator": "==", "value": "2019"},
-        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]},
+        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]}
       					]
     			   }
-  		      }
+  		      }`
     """
    
     myDocs = searchInDocstore(params)
+    if myDocs is None:
+        return {"answer":"None", "document":[]}
     for doc in myDocs:
         doc.content = doc.content.replace('\r\n', '')
    
@@ -410,19 +489,15 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     """
     builder = PromptBuilder(template=template)
     my_prompt = builder.run(myDocs=myDocs, query=params.query.strip())["prompt"].strip()
-    options ={"num_predict": -1,"temperature": 0.1}
-    #req = requests.post("http://localhost:11434/api/generate", json={"model":LLM_MODEL,"prompt":my_prompt, "keep_alive": -1, "stream":False, "options": options})  #OLLAMA api
-    response="No hay respuesta"
-    #if req.status_code == 200:
-    #    response = req.json()["response"]
-    
-        #print(response)
+    options ={"num_predict": -1,"temperature": 0.1}    
     #result = reader.run(
     #    query=params.query.strip(),
     #    documents=myDocs,
     #    top_k=params.top_k_answers
     # )["answers"]
     response=launchAgent(my_prompt, options)
+    if response is None:
+        response = ""
     result = []
     for doc in myDocs:
         result.append(doc.to_dict())   
@@ -441,13 +516,13 @@ def show_documents(filters: FilterRequest):
     
     To get all documents you should provide an empty dict, like:`'{"filters": {}}`
     
-    {"filters": { "operator": "AND",
+    `{"filters": { "operator": "AND",
       			"conditions": [
         			{"field": "meta.name", "operator": "==", "value": "2019"},
-        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]},
+        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]}
       					]
     			   }
-  		      }
+  		      }`
     """
     prediction = document_store.filter_documents(filters=filters.filters)
     result = []
@@ -471,13 +546,13 @@ def list_documents_name(filters: FilterRequest):
         
         To get all documents you should provide an empty dict, like:`'{"filters": {}}`
         
-        {"filters": { "operator": "AND",
+        `{"filters": { "operator": "AND",
                     "conditions": [
                         {"field": "meta.name", "operator": "==", "value": "2019"},
-                        {"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]},
+                        {"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]}
                             ]
                        }
-                  }
+                  }`
     """
      print(filters.filters)
      prediction = document_store.filter_documents(filters=filters.filters)
@@ -499,13 +574,13 @@ def delete_documents(filters: FilterRequest):
     
     To get all documents you should provide an empty dict, like:`'{"filters": {}}`
     
-    {"filters": { "operator": "AND",
+    `{"filters": { "operator": "AND",
       			"conditions": [
         			{"field": "meta.name", "operator": "==", "value": "2019"},
-        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]},
+        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]}
       					]
     			   }
-  		      }
+  		      }`
     """
     if not filters.filters:
         prediction = document_store.filter_documents(filters=filters.filters)
@@ -515,7 +590,7 @@ def delete_documents(filters: FilterRequest):
     else:
         raise HTTPException(status_code=404, detail="Empty file name!") 
 
-@app.get("/agents/summarize/", tags=["agents"], response_class=PlainTextResponse)  
+@app.get("/agents/summarize/{file_name}", tags=["agents"], response_class=PlainTextResponse)  
 def get_summary(file_name: str):
     """
     Devuelve un resumen que captura los puntos más importantes.
@@ -558,9 +633,12 @@ def get_summary(file_name: str):
                 if  doc.meta["file_type"].startswith("audio/"):
                     current_speaker = ""
                 my_prompt = builder.run(myDocs=custom_docs)["prompt"].strip()
-                print(my_prompt)
+                #print(my_prompt)
                 custom_docs = ""
-                response.append("\n\n" + launchAgent(my_prompt, options))
+                agent_response = launchAgent(my_prompt, options)
+                if agent_response is None:
+                    return ""
+                response.append("\n\n" + agent_response)
                  
                 
         if not custom_docs.strip().endswith((".",",","!","?",";")):
@@ -568,13 +646,16 @@ def get_summary(file_name: str):
         if len(custom_docs) > 0:
             my_prompt = builder.run(myDocs=custom_docs)["prompt"].strip()
             custom_docs = ""
-            response.append("\n\n" + launchAgent(my_prompt, options))
+            agent_response = launchAgent(my_prompt, options)
+            if agent_response is None:
+                return ""
+            response.append("\n\n" + agent_response)
 
         return  ''.join(response)
     else:
         raise HTTPException(status_code=404, detail="File not found!")
         
-@app.get("/audio/get_SRT/", tags=["audio"], response_class=PlainTextResponse)  
+@app.get("/audio/get_SRT/{file_name}", tags=["audio"], response_class=PlainTextResponse)  
 def get_SRT(file_name: str):
     """
     This endpoint get the srt file referred to a specific audio file that  have been processed previously.
@@ -595,11 +676,11 @@ def get_SRT(file_name: str):
     else:
         raise HTTPException(status_code=404, detail="File not found!") 
 
-@app.get("/audio/get_SRT_traslated/", tags=["audio"], response_class=PlainTextResponse) 
+@app.get("/audio/get_SRT_traslated/{file_name}/{lang}", tags=["audio"], response_class=PlainTextResponse) 
 def get_SRT_traslated(file_name: str, lang:str):
     """
     This endpoint get the srt file referred to a specific audio file that have been processed previously, traslated into a defined language. The language param admit most commons languages.
-    Ej: Español, inglés, alemán, italiano, francés,...
+    Ej: *Español, inglés, alemán, italiano, francés,...*
     """
     filters = {"field": "meta.name", "operator": "==", "value": file_name.strip()}
     prediction = document_store.filter_documents(filters=filters)
@@ -645,6 +726,8 @@ Ejemplo respuesta:
         srt_file = []
         for prompt in prompt_list:
             agent_result = launchAgent(prompt, options)
+            if agent_result is None:
+                return ""
             data = agent_result.split("\n")
             #print(data)
             final_list = [i for i in data if i]
@@ -688,7 +771,7 @@ def upload_plain_srt(input_values:InputSRT, background_tasks: BackgroundTasks):
 @app.post("/audio/upload/", tags=["audio"])
 def upload_audios(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(...)):
     """
-    This endpoint accepts audio in .mp3 format. It only can be parsed by "\\n" character.
+    This endpoint accepts audio in **.mp3** format. It only can be parsed by "\\n" character.
     
     `TODO: Add support for other parsing options.`
     
@@ -716,7 +799,7 @@ def upload_audios(files: Annotated[List[UploadFile], File(description="files")],
 @app.post("/documents/upload/", tags=["docs"])
 def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(...)):
     """
-    This endpoint accepts documents in .doc, .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg and .txt .srt format at this time. It only can be parsed by paragraphs.
+    This endpoint accepts documents in **.doc, .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg,.txt and.srt** format. It only can be parsed by paragraphs.
     
     `TODO: Add support for other parsing options.`
     
