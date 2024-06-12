@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Body, HTTP
 from fastapi.responses import HTMLResponse
 from fastapi.responses import PlainTextResponse
 #from typing_extensions import Annotated
-from pydantic import BaseModel, Extra, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, ConfigDict
 #from sentence_transformers import SentenceTransformer
 import requests
 import concurrent
@@ -17,7 +17,6 @@ from haystack_integrations.components.retrievers.elasticsearch import Elasticsea
 from haystack_integrations.components.retrievers.elasticsearch import ElasticsearchEmbeddingRetriever
 
 #from haystack.components.readers import ExtractiveReader
-#from haystack_integrations.components.generators.ollama import OllamaGenerator
 from haystack.components.builders.prompt_builder import PromptBuilder
 
 #from haystack.components.embedders import SentenceTransformersTextEmbedder, SentenceTransformersDocumentEmbedder
@@ -112,17 +111,14 @@ retriever = ElasticsearchEmbeddingRetriever(document_store=document_store)
 #reader.warm_up()
 #PlanTL-GOB-ES/roberta-large-bne-sqac
   
-class RequestBaseModel(BaseModel):
-    class Config:
-        # Forbid any extra fields in the request to avoid silent failures
-        extra = Extra.forbid
-        
 #PrimitiveType = Union[str, int, float, bool]
-class FilterRequest(RequestBaseModel):
+class FilterRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     #filters: Optional[Dict[str, Union[PrimitiveType, List[PrimitiveType], Dict[str, PrimitiveType]]]] = None
     filters: Optional[Dict] = None
     
-class InputParams(RequestBaseModel):
+class InputParams(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     metadata: Optional[List[dict,]]= None   
         
     @model_validator(mode='before')
@@ -132,17 +128,11 @@ class InputParams(RequestBaseModel):
             return cls(**json.loads(value))
         return value
 
-class InputSRT(InputParams):
+class plainSRTParams(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     text:str = Field(title="SRT text")
-    filename:str = Field(title="File name")
-    metadata: Optional[dict]= None   
-        
-    @model_validator(mode='before')
-    @classmethod
-    def validate_to_json(cls, value):
-        if isinstance(value, str):
-            return cls(**json.loads(value))
-        return value
+    filename:str = Field(title="File name", max_length=75)
+    metadata:Optional[Dict] = None
         
 class SearchQueryParam(FilterRequest):
     query:str = Field(title="Query max length 1500 chars", max_length=1500)
@@ -151,9 +141,6 @@ class SearchQueryParam(FilterRequest):
     
 class AskQueryParams(SearchQueryParam):
     top_k_answers:int = Field(default=2,gt=0, le=50, description="Number of ask results")
-
-class AskFileName(RequestBaseModel):
-    file_name:str = Field(title="File name", max_length=1500, min_length=3)
 
 def document_manager(files, metadata):
     start = time.process_time()
@@ -173,31 +160,16 @@ def document_manager(files, metadata):
     print("Processing time:",end - start)
 
 def audio_manager(files, metadata):
-    
-    # start = time.process_time()
-    # #1. launch process to generate srt, txt and json outputs in audio path
-    # for i,file in enumerate(files):
-        # p = subprocess.run(["/home/administrador/whisper-diarization/venv/bin/python3", "/home/administrador/whisper-diarization/diarize_parallel.py", "-a", file[0], "--no-stem", "--whisper-model", "large-v3", "--device", "cuda", "--language", "es", "--batch-size", "32"])                        
-
-    # #2. read json outputs from audio path, encode and upload to database as documents
-    # with concurrent.futures.ThreadPoolExecutor() as executor: # optimally defined number of threads
-        # for i,file in enumerate(files):
-            # meta = {"file_type":file[1]}
-            
-            # if metadata and len(metadata) > i:
-                # meta.update(metadata[i])
-            # executor.submit(processSRT_json, file[0], meta)
-            # #processSRT_json(file,meta)
-    # end = time.process_time()
-    # print("Processing time:",end - start)
+    start = time.process_time()
     if len(files) > 0:
         try:
-            req = requests.post(AUDIO_TRANSCRIBE_SERVER + "transcribe", json={"audio_files": files})  #transcribe audio files
-            if req.status_code == 200:
-                #doc_emb = req.json()["data"]
-                print("OK")
+            req = requests.post(AUDIO_TRANSCRIBE_SERVER + "transcribe", json={"audio_path": files})  #transcribe audio files
+            req.raise_for_status()
+            #print(req.json())
         except requests.exceptions.RequestException as e:
-            return "Error!"
+            print("Error!", str(e))
+            #return "Error!"
+    print("Processing time:",end - start)
 
 def processFile(file, ext, metadata):
     docs = []
@@ -264,7 +236,7 @@ def generateSRT_doc(filename, srt_text, metadata):
     
     current_texts = []
     for audio_chunk in srt_json:
-        current_texts.append(audio_chunk["content"])
+        current_texts.append(audio_chunk["content"].replace("\"", "\'"))
         
     if len(current_texts) > 0:
         try:
@@ -278,7 +250,7 @@ def generateSRT_doc(filename, srt_text, metadata):
                     
                     currentMetadata.update(metadata)
                     currentMetadata.update({"timestamp":dt_string, "page":1, "name":filename, "file_type":"audio/"})
-                    docs.append(Document(content=text.replace("\"", "\'"), meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
+                    docs.append(Document(content=text, meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
         except requests.exceptions.RequestException as e:
             print("ERROR!")
     if len(docs) > 0:
@@ -341,12 +313,9 @@ def launchAgent(prompt, options):
     try:
         #req = requests.post(OLLAMA_SERVER+"api/generate", json={"model":LLM_MODEL,"prompt":prompt, "system":"Eres un asistente muy obediente.","keep_alive":-1, "stream":False, "options": options})
         req = requests.post(OLLAMA_SERVER+"api/generate", json={"model":LLM_MODEL,"prompt":prompt, "keep_alive":-1, "stream":False, "options": options})
-        if req.status_code == 200:
-            return req.json()["response"]
-        #else:
-            #print("error")
-            #raise HTTPException(status_code=204, detail="Error generating summary") 
-        #    return None
+        req.raise_for_status()     
+        return req.json()["response"]
+
     except requests.exceptions.RequestException as e:
         return None
     
@@ -364,7 +333,8 @@ def main():
 </body>
     """
     return HTMLResponse(content=content)    
-    
+
+
 @app.get("/status/")
 def check_status():
     #doc = document_store.describe_documents()
@@ -398,6 +368,7 @@ def check_status():
         result.update({"diarization_status":"ERROR! " +str(e)})
 
     return result
+
 
 @app.get("/status/{audio_file}",tags=["audio"])
 async def get_audio_status(audio_file: str) -> dict:
@@ -449,6 +420,7 @@ def search_document(params:Annotated[SearchQueryParam, Body(embed=True)]):
     docs_context = getContext(result, params.context_size)
     
     return docs_context
+
 
 @app.post("/ask/", tags=["search"])
 def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
@@ -504,7 +476,8 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     docs_context = getContext(result, params.context_size)   
     final_result = {"answer":response, "document":docs_context}
     return final_result
-   
+
+
 @app.post("/documents/show/", tags=["docs"])
 def show_documents(filters: FilterRequest):
     """
@@ -533,7 +506,8 @@ def show_documents(filters: FilterRequest):
 
     #print_documents(prediction, max_text_len=100, print_name=True, print_meta=True)
     return result
-    
+
+
 @app.post("/documents/name_list/", tags=["docs"])
 def list_documents_name(filters: FilterRequest):
 
@@ -562,7 +536,8 @@ def list_documents_name(filters: FilterRequest):
         res.append(doc.meta["name"])
      res = list(set(res))
      return res
-    
+
+
 @app.post("/documents/delete/", tags=["docs"])
 def delete_documents(filters: FilterRequest):
     """
@@ -582,13 +557,11 @@ def delete_documents(filters: FilterRequest):
     			   }
   		      }`
     """
-    if not filters.filters:
-        prediction = document_store.filter_documents(filters=filters.filters)
-        ids = [doc.id for doc in prediction]
-        document_store.delete_documents(document_ids=ids)
-        return True
-    else:
-        raise HTTPException(status_code=404, detail="Empty file name!") 
+    prediction = document_store.filter_documents(filters=filters.filters)
+    ids = [doc.id for doc in prediction]
+    document_store.delete_documents(document_ids=ids)
+    return True
+
 
 @app.get("/agents/summarize/{file_name}", tags=["agents"], response_class=PlainTextResponse)  
 def get_summary(file_name: str):
@@ -654,7 +627,8 @@ def get_summary(file_name: str):
         return  ''.join(response)
     else:
         raise HTTPException(status_code=404, detail="File not found!")
-        
+
+
 @app.get("/audio/get_SRT/{file_name}", tags=["audio"], response_class=PlainTextResponse)  
 def get_SRT(file_name: str):
     """
@@ -675,6 +649,7 @@ def get_SRT(file_name: str):
         return srt_file
     else:
         raise HTTPException(status_code=404, detail="File not found!") 
+
 
 @app.get("/audio/get_SRT_traslated/{file_name}/{lang}", tags=["audio"], response_class=PlainTextResponse) 
 def get_SRT_traslated(file_name: str, lang:str):
@@ -755,18 +730,18 @@ Ejemplo respuesta:
         return plain_res
     else:
         raise HTTPException(status_code=404, detail="File not found!")
-        
+
 
 @app.post("/documents/upload/plainSRT/", tags=["docs"])
-def upload_plain_srt(input_values:InputSRT, background_tasks: BackgroundTasks):
+def upload_plain_srt(input_values:plainSRTParams, background_tasks: BackgroundTasks):
     """
     This endpoint accepts .srt files in plain text for processing.
     File name required.
     Metadata example for each file added: `{"user": ["some", "more"], "category": ["only_one"]}`    OR    empty
     """
-    #print(input_values["text"])
     background_tasks.add_task(generateSRT_doc, input_values.filename, input_values.text, input_values.metadata)
     return {"message":"SRT plain text uploaded correctly, processing..." , "filenames":input_values.filename}
+
 
 @app.post("/audio/upload/", tags=["audio"])
 def upload_audios(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(...)):
@@ -788,14 +763,13 @@ def upload_audios(files: Annotated[List[UploadFile], File(description="files")],
             else:               
                 with open(audio_file, "wb") as buffer:                
                     shutil.copyfileobj(file.file, buffer)
-                    filenames.append((file.filename, file.content_type))    
-                
+                    filenames.append(audio_file)    
+    #print(filenames)
     background_tasks.add_task(audio_manager, filenames, metadata.metadata)
 
-        
-    return {"message":"Files uploaded correctly, processing..." , "filenames": [file[0] for file in filenames]}
+    return {"message":"Files uploaded correctly, processing..." , "filenames": [os.path.basename(file) for file in filenames]}
 
-    
+
 @app.post("/documents/upload/", tags=["docs"])
 def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks, metadata:InputParams = Body(...)):
     """
@@ -808,7 +782,5 @@ def upload_documents(files: Annotated[List[UploadFile], File(description="files"
     #
     #https://stackoverflow.com/questions/63110848/how-do-i-send-list-of-dictionary-as-body-parameter-together-with-files-in-fastap
     background_tasks.add_task(document_manager, copy.deepcopy(files), metadata.metadata)
-    #
 
-        
     return {"message":"Files uploaded correctly, processing..." , "filenames": [file.filename for file in files]}
