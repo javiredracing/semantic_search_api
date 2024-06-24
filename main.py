@@ -131,7 +131,7 @@ class InputParams(BaseModel):
 class plainSRTParams(BaseModel):
     model_config = ConfigDict(extra='forbid')
     text:str = Field(title="SRT text")
-    filename:str = Field(title="File name", max_length=75)
+    filename:str = Field(title="File name", max_length=150)
     metadata:Optional[Dict] = None
         
 class SearchQueryParam(FilterRequest):
