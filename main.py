@@ -1,7 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Body, HTTPException
-from fastapi.responses import HTMLResponse
-from fastapi.responses import PlainTextResponse
-#from typing_extensions import Annotated
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from pydantic import BaseModel, Field, model_validator, ConfigDict
 #from sentence_transformers import SentenceTransformer
 import requests
@@ -160,7 +158,6 @@ def document_manager(files, metadata):
     print("Processing time:",end - start)
 
 def audio_manager(files, metadata):
-    start = time.process_time()
     if len(files) > 0:
         try:
             req = requests.post(AUDIO_TRANSCRIBE_SERVER + "transcribe", json={"audio_path": files})  #transcribe audio files
@@ -169,7 +166,6 @@ def audio_manager(files, metadata):
         except requests.exceptions.RequestException as e:
             print("Error!", str(e))
             #return "Error!"
-    print("Processing time:",end - start)
 
 def processFile(file, ext, metadata):
     docs = []
@@ -322,18 +318,9 @@ def launchAgent(prompt, options):
     return None
         
     
-@app.get("/")
+@app.get("/", include_in_schema=False)
 def main():
-    content = """
-<body>
-<form action="/documents/upload/" enctype="multipart/form-data" method="post">
-<input name="files" type="file" multiple>
-<input type="submit">
-</form>
-</body>
-    """
-    return HTMLResponse(content=content)    
-
+    return RedirectResponse(url='/docs')    
 
 @app.get("/status/")
 def check_status():
@@ -528,7 +515,7 @@ def list_documents_name(filters: FilterRequest):
                        }
                   }`
     """
-     print(filters.filters)
+     #print(filters.filters)
      prediction = document_store.filter_documents(filters=filters.filters)
      
      res = []
@@ -781,6 +768,9 @@ def upload_documents(files: Annotated[List[UploadFile], File(description="files"
     """
     #
     #https://stackoverflow.com/questions/63110848/how-do-i-send-list-of-dictionary-as-body-parameter-together-with-files-in-fastap
+    for file in files:
+        if file.content_type.startswith("audio/"):
+            return {"message":"Error uploading files! This endpint only accepts text files. Use /audio/upload/ endpoint for uploading audio files"}
     background_tasks.add_task(document_manager, copy.deepcopy(files), metadata.metadata)
 
     return {"message":"Files uploaded correctly, processing..." , "filenames": [file.filename for file in files]}

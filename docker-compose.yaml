@@ -1,0 +1,73 @@
+services:
+   database:
+      image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
+      container_name: elasticsearch
+      restart: always
+      environment:
+         - discovery.type=single-node
+         - "ES_JAVA_OPTS=-Xms1024m -Xmx1024m"
+         - xpack.security.enabled=false
+      ports:
+           - "9200:9200"
+      volumes:
+        - /home/administrador/project-data/data/:/usr/share/elasticsearch/data
+ 
+   ollama:
+      image: ollama/ollama:latest
+      container_name: ollama
+      restart: always
+      environment:
+         - OLLAMA_KEEP_ALIVE=-1
+      ports:
+           - "11434:11434"
+      volumes:
+        - /home/administrador/project-data/ollama:/root/.ollama
+      deploy:
+          resources:
+            reservations:
+              devices:
+                - driver: nvidia
+                  count: all
+                  capabilities: [gpu]
+    
+   infinity:
+      image: michaelf34/infinity:latest
+      container_name: embeddings_server
+      restart: always
+      ports:
+        - "7997:7997"
+      volumes:
+        - /home/administrador/project-data:/app/.cache
+      deploy:
+          resources:
+            reservations:
+              devices:
+                - driver: nvidia
+                  count: all
+                  capabilities: [gpu]
+      command: ["v2", "--model-id", "intfloat/multilingual-e5-large-instruct", "--port", "7997"]
+        
+   diarization:
+      image: hub.iter.es/diarization_api:V0.4
+      container_name: diarization_api
+      restart: always
+      network_mode: host
+      volumes:
+        - /home/administrador/audio2:/home/administrador/audio2
+      deploy:
+          resources:
+            reservations:
+              devices:
+                - driver: nvidia
+                  count: all
+                  capabilities: [gpu]
+        
+   semantic_search:
+      image: hub.iter.es/semantic_search_api:V0.1
+      container_name: semantic_search_api
+      restart: always
+      network_mode: host
+      volumes:
+        - /home/administrador/audio2:/home/administrador/audio2
+      depends_on:
+          - database

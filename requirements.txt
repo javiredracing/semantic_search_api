@@ -1,12 +1,8 @@
 haystack-ai
 fastapi
-uvicorn[standard]
-#torch --index-url https://download.pytorch.org/whl/cu121
 PyMuPDF
 thefuzz
 python-docx
-#sentence-transformers
-#transformers[torch,sentencepiece]
 python-multipart
 email-validator
 elasticsearch-haystack
