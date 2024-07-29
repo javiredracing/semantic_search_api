@@ -63,7 +63,7 @@ services:
                   capabilities: [gpu]
         
    semantic_search:
-      image: hub.iter.es/semantic_search_api:V0.1
+      image: hub.iter.es/semantic_search_api:V0.2
       container_name: semantic_search_api
       restart: always
       network_mode: host

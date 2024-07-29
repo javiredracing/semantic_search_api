@@ -25,9 +25,10 @@ from datetime import datetime
 from lib.ProcessText import *
 import json
 import time
+import validators
 
 #LLM_MODEL = "mixtral:8x7b-instruct-v0.1-q5_K_M"
-LLM_MODEL = "llama3:8b-instruct-fp16"
+LLM_MODEL = "llama3.1:8b-instruct-fp16"
 #LLM_MODEL = "phi3:14b-medium-128k-instruct-f16"
 
 tags_metadata = [
@@ -125,6 +126,9 @@ class InputParams(BaseModel):
         if isinstance(value, str):
             return cls(**json.loads(value))
         return value
+        
+class uploadURL(InputParams):
+    urls:List[str] = Field(title="URI")
 
 class plainSRTParams(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -136,9 +140,6 @@ class SearchQueryParam(FilterRequest):
     query:str = Field(title="Query max length 1500 chars", max_length=1500)
     top_k:int = Field(default=5,gt=0, le=50, description="Number of search results")
     context_size:int = Field(default=0,ge=0, le=20, description="Number of paragrhaps in context")
-    
-class AskQueryParams(SearchQueryParam):
-    top_k_answers:int = Field(default=2,gt=0, le=50, description="Number of ask results")
 
 def document_manager(files, metadata):
     start = time.process_time()
@@ -160,7 +161,7 @@ def document_manager(files, metadata):
 def audio_manager(files, metadata):
     if len(files) > 0:
         try:
-            req = requests.post(AUDIO_TRANSCRIBE_SERVER + "transcribe", json={"audio_path": files})  #transcribe audio files
+            req = requests.post(AUDIO_TRANSCRIBE_SERVER + "transcribe/", json={"audio_path": files})  #transcribe audio files
             req.raise_for_status()
             #print(req.json())
         except requests.exceptions.RequestException as e:
@@ -179,7 +180,7 @@ def generate_doc(texts, metadata, pages):
     docs = []
     if len(texts) > 0:
         try:
-            req = requests.post(EMBEDDINGS_SERVER+"embeddings", json={"input": texts, "model": TRANSFORMER})  #encode texts infinity api
+            req = requests.post(EMBEDDINGS_SERVER+"embeddings/", json={"input": texts, "model": TRANSFORMER})  #encode texts infinity api
             if req.status_code == 200:
                 doc_emb = req.json()["data"]
                 now = datetime.now()
@@ -217,7 +218,7 @@ def parseSRT(texts):
                 content += text_chunk + " "
             index_char = content.find(":")
             speaker = ""
-            if index_char > 0 and index_char < 20 and len(content) > 0 and len(content) > (index_char + 1):
+            if index_char > 0 and index_char < 30 and len(content) > 0 and len(content) > (index_char + 1):
                 speaker = content[0:index_char].strip()
                 content = content[(index_char + 1):]
             current_texts.append({"content":content.strip(), "metadata":{"paragraph":i, "start_time":start_time, "end_time":end_time, "speaker":speaker}})
@@ -317,7 +318,22 @@ def launchAgent(prompt, options):
     
     return None
         
-    
+def download_file(url):
+    if validators.url(url):
+        filename = url.split("/")[-1]
+        audio_file = os.path.join(AUDIO_PATH, filename)
+        if not os.path.isfile(audio_file):
+            try:
+                with requests.get(url, stream=True, timeout=10) as r:
+                    with open(audio_file, 'wb') as f:
+                        shutil.copyfileobj(r.raw, f)
+                return audio_file
+            except requests.exceptions.RequestException as e:
+                print("Error uploading the file " + filename + ": " + str(e))
+            except Exception as err:
+                print("Error uploading the file " + filename + ": " + str(err))
+    return ""
+
 @app.get("/", include_in_schema=False)
 def main():
     return RedirectResponse(url='/docs')    
@@ -327,7 +343,7 @@ def check_status():
     #doc = document_store.describe_documents()
     result = {}
     try:
-        res = requests.get(EMBEDDINGS_SERVER + "models")
+        res = requests.get(EMBEDDINGS_SERVER + "models/")
         res.raise_for_status()        
         result.update({"embeddings_status":res.json()})
     except requests.exceptions.RequestException as e:
@@ -348,7 +364,7 @@ def check_status():
         result.update({"llm_status":"ERROR! " + str(e)})
     
     try:   
-        res = requests.get(AUDIO_TRANSCRIBE_SERVER+"status")
+        res = requests.get(AUDIO_TRANSCRIBE_SERVER+"status/")
         res.raise_for_status()
         result.update({"diarization_status":res.json()})
     except requests.exceptions.RequestException as e:  
@@ -410,7 +426,7 @@ def search_document(params:Annotated[SearchQueryParam, Body(embed=True)]):
 
 
 @app.post("/ask/", tags=["search"])
-def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
+def ask_document(params:Annotated[SearchQueryParam, Body(embed=True)]):
     """
     This endpoint receives the question as a string and allows the requester to set
     additional parameters that will be passed on to the system to get a set of most releveant anwsers.
@@ -430,12 +446,12 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
    
     myDocs = searchInDocstore(params)
     if myDocs is None:
-        return {"answer":"None", "document":[]}
+        return {"answer":"None", "document":[]}        
     for doc in myDocs:
         doc.content = doc.content.replace('\r\n', '')
-   
+    
     template = """
-    Con la información proporcionada, responde a la pregunta en el lenguaje del texto proporcionado.
+    Con la información proporcionada, responde a la pregunta en el mismo lenguaje del texto proporcionado.
     Ignora tu conocimiento.
 
     Contexto:
@@ -448,12 +464,7 @@ def ask_document(params:Annotated[AskQueryParams, Body(embed=True)]):
     """
     builder = PromptBuilder(template=template)
     my_prompt = builder.run(myDocs=myDocs, query=params.query.strip())["prompt"].strip()
-    options ={"num_predict": -1,"temperature": 0.1}    
-    #result = reader.run(
-    #    query=params.query.strip(),
-    #    documents=myDocs,
-    #    top_k=params.top_k_answers
-    # )["answers"]
+    options ={"num_predict": -1,"temperature": 0.1,"num_ctx":8192}    
     response=launchAgent(my_prompt, options)
     if response is None:
         response = ""
@@ -747,10 +758,15 @@ def upload_audios(files: Annotated[List[UploadFile], File(description="files")],
             audio_file = os.path.join(AUDIO_PATH, file.filename)
             if os.path.isfile(audio_file):
                 print('File exists')
-            else:               
-                with open(audio_file, "wb") as buffer:                
-                    shutil.copyfileobj(file.file, buffer)
-                    filenames.append(audio_file)    
+            else:
+                try:
+                    with open(audio_file, "wb") as buffer:                
+                        shutil.copyfileobj(file.file, buffer)
+                        filenames.append(audio_file)    
+                except Exception:
+                    print("There was an error uploading the file")
+                finally:
+                    file.file.close()
     #print(filenames)
     background_tasks.add_task(audio_manager, filenames, metadata.metadata)
 
@@ -774,3 +790,31 @@ def upload_documents(files: Annotated[List[UploadFile], File(description="files"
     background_tasks.add_task(document_manager, copy.deepcopy(files), metadata.metadata)
 
     return {"message":"Files uploaded correctly, processing..." , "filenames": [file.filename for file in files]}
+
+@app.post("/audio/upload/from_url", tags=["audio"])
+def upload_audio_url(files:uploadURL, background_tasks:BackgroundTasks):
+    filenames = []
+    if len(files.urls) > 0:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = []
+            for url in files.urls:
+                futures.append(executor.submit(download_file, url))
+            for future in concurrent.futures.as_completed(futures):
+                filenames.append(future.result())
+        filenames = [x for x in filenames if x] #clear emptys
+        if len(filenames) > 0:
+            background_tasks.add_task(audio_manager, filenames, files.metadata)    
+            return {"message":"Files uploaded correctly, processing..." , "filenames": [os.path.basename(file) for file in filenames]}
+    return {"message":"No files processed!"}
+
+# @app.post("/documents/upload/from_url", tags=["docs"])
+# def upload_documents_url(files:uploadURL, background_tasks:BackgroundTasks):
+    
+    # for url in files.urls:
+        # if validators.url(url):
+            # try:
+                # res = requests.get(url)
+                # res.raise_for_status()
+            # except requests.exceptions.RequestException as e:
+                # print("Error")
+            
