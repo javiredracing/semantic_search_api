@@ -447,23 +447,32 @@ def ask_document(params:Annotated[SearchQueryParam, Body(embed=True)]):
     myDocs = searchInDocstore(params)
     if myDocs is None:
         return {"answer":"None", "document":[]}        
+    
+    grouped_docs = {}
     for doc in myDocs:
+        name = doc.meta["name"]
         doc.content = doc.content.replace('\r\n', '')
-    
+        # Si el nombre no está en el diccionario, lo agrega con un contenido vacío
+        if name not in grouped_docs:
+            grouped_docs[name] = []
+        # Agrega el contenido al arreglo correspondiente al nombre
+        grouped_docs[name].append(doc.content)
+
     template = """
-    Con la información proporcionada, responde a la pregunta en el mismo lenguaje del texto proporcionado.
-    Ignora tu conocimiento.
-
-    Contexto:
-    
-    {% for document in myDocs %}
-        {{ document.content }}
+    Se proporciona información procedente de cada documento:
+        
+    {% for name, content in myDocs.items() %}
+        Documento: {{ name }}        
+        {% for text in content %}
+            - {{text}}
+        {% endfor %}   
     {% endfor %}
-
-    Pregunta: {{ query }}
+    
+    Por cada uno de los documentos proporcionados, responde a la siguiente pregunta en el mismo idioma: {{ query }}. No te inventes nada.
     """
+    
     builder = PromptBuilder(template=template)
-    my_prompt = builder.run(myDocs=myDocs, query=params.query.strip())["prompt"].strip()
+    my_prompt = builder.run(myDocs=grouped_docs, query=params.query.strip())["prompt"].strip()
     options ={"num_predict": -1,"temperature": 0.1,"num_ctx":8192}    
     response=launchAgent(my_prompt, options)
     if response is None:
@@ -793,6 +802,13 @@ def upload_documents(files: Annotated[List[UploadFile], File(description="files"
 
 @app.post("/audio/upload/from_url", tags=["audio"])
 def upload_audio_url(files:uploadURL, background_tasks:BackgroundTasks):
+    """
+    This endpoint accepts documents in **.doc, .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg,.txt and.srt** format from external URLs It only can be parsed by paragraphs.
+    
+    `TODO: Add support for other parsing options.`
+    
+    Metadata example for each file added: `{"name": ["some", "more"], "category": ["only_one"]}`    OR    empty
+    """
     filenames = []
     if len(files.urls) > 0:
         with concurrent.futures.ThreadPoolExecutor() as executor:
