@@ -1,6 +1,7 @@
 import pathlib
 
 from starlette.config import Config
+from starlette.datastructures import CommaSeparatedStrings
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent  # app/
 BASE_DIR = ROOT.parent  # ./
@@ -17,3 +18,41 @@ API_ALGORITHM = config("API_ALGORITHM", str)
 API_ACCESS_TOKEN_EXPIRE_MINUTES = config(
     "API_ACCESS_TOKEN_EXPIRE_MINUTES", int
 )  # infinity
+
+DB_HOST = config("DATABASE_SERVER", str)
+EMBEDDINGS_SERVER = config("EMBEDDINGS_SERVER",str)
+OLLAMA_SERVER = config("OLLAMA_SERVER", str)
+AUDIO_TRANSCRIBE_SERVER = config("AUDIO_TRANSCRIBE_SERVER",str)
+AUDIO_PATH = config("AUDIO_PATH",str)
+
+INDEX_SETTINGS = {
+        "settings": {
+            "number_of_shards": 1,
+            "number_of_replicas": 0
+        },
+        "mappings": {
+            "properties": {
+                "name": {
+                    "type": "text",
+                    "analyzer": "standard"
+                },
+                "description": {
+                    "type": "text",
+                    "analyzer": "standard"
+                },
+                "user": {
+                    "type": "keyword"
+                }
+            }
+        }
+    }
+
+PROJECTS_INDEX = "projects_index"
+
+LDAP_ou = config("LDAP_ou",str)
+LDAP_dc = config("LDAP_dc",str)
+LDAP_server = config("LDAP_server",str)
+ADMIN_USERS = config("ADMIN_USERS", cast=CommaSeparatedStrings)
+
+LLM_MODEL = config("LLM_MODEL",str)
+EMBEDDINGS_MODEL = config("TRANSFORMER",str)
