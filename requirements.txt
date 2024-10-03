@@ -32,7 +32,7 @@ packaging==23.2
     # via gunicorn
 passlib==1.7.4
     # via fastapi-nano (pyproject.toml)
-pyasn1==0.5.0
+pyasn1==0.6.1
     # via
     #   python-jose
     #   rsa
