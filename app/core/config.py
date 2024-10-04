@@ -25,26 +25,6 @@ OLLAMA_SERVER = config("OLLAMA_SERVER", str)
 AUDIO_TRANSCRIBE_SERVER = config("AUDIO_TRANSCRIBE_SERVER",str)
 AUDIO_PATH = config("AUDIO_PATH",str)
 
-# INDEX_SETTINGS = {
-#         "settings": {
-#             "number_of_shards": 1,
-#             "number_of_replicas": 0
-#         },
-#         "mappings": {
-#             "properties": {
-#                 "project": {
-#                     "type": "keyword"
-#                 },
-#                 "description": {
-#                     "type": "text",
-#                     "analyzer": "standard"
-#                 },
-#                 "user": {
-#                     "type": "keyword"
-#                 }
-#             }
-#         }
-#     }
 INDEX_SETTINGS = {'mappings':
                       {'_source': {'enabled': True},
                        'properties':

@@ -30,9 +30,7 @@ def authenticate_user(
     password: str,
 ) -> bool:
     username_mod = f'uid={username},ou={LDAP_ou},dc=iter,dc=es'
-    # conn = Connection(server, 'uid=jfernandez,ou=users,dc=iter,dc=es', password, auto_bind=False, auto_referrals=False, raise_exceptions=False)
     server = Server(LDAP_server, use_ssl=False, get_info='ALL')
-    # print("server",username_mod)
     conn = Connection(server, username_mod, password, auto_bind=False, auto_referrals=False, raise_exceptions=False)
     result = False
     try:
@@ -112,9 +110,14 @@ async def list_projects(username:str, password:SecretStr,) -> list:
             query = {"query": {"match_all": {}}}
 
         response = document_store.client.search(index=PROJECTS_INDEX, body=query)
-        # for hit in response['hits']['hits']:
-        #     print(hit['_source'])
-        return [hit['_source'] for hit in response['hits']['hits']]
+        result = []
+        for hit in response['hits']['hits']:
+            project = hit['_source']["project"]
+            my_token= create_access_token(data={"sub": project})
+            hit['_source']["token"] = my_token
+            result.append(hit['_source'])
+        document_store.client.close()
+        return result
 
     except Exception as e:
         raise HTTPException(
@@ -136,7 +139,6 @@ async def login_for_access_token(
     project = project.lower().strip().replace(" ", "_")
 
     try:
-        #
         document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index=PROJECTS_INDEX, custom_mapping=INDEX_SETTINGS)
         response = document_store.client.search(index=PROJECTS_INDEX, body={"query": {"match": {"project": project}}})
         if response['hits']['total']['value'] > 0:
@@ -146,16 +148,13 @@ async def login_for_access_token(
                 detail="Project already exists!",
             )
         else:
-            print("1")
             document_store.client.index(index=PROJECTS_INDEX,
                                         body={"project": project, "description": description, "user": username})
             document_store.client.close()
-            print("2")
             document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index=project)
-            print("3")
             document_store.client.close()
     except Exception as e:
-        print(e)
+        #print(e)
         raise HTTPException(
             status_code=HTTPStatus.FAILED_DEPENDENCY,
             detail="Error in database",
@@ -169,6 +168,3 @@ async def login_for_access_token(
         expires_delta=access_token_expires,
     )
     return {"access_token": access_token, "project": project}
-
-
-#INDEX_SETTINGS = {"settings": {"number_of_shards": 1, "number_of_replicas": 0 },"mappings": {"properties": {"name": {"type": "text", "analyzer": "standard"}, "description": {"type": "text","analyzer": "standard"},"user": {"type": "keyword"}}}}
