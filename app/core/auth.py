@@ -124,7 +124,7 @@ async def list_projects(username:str, password:SecretStr,) -> list:
 
 @router.post("/create", response_model=Token, tags=["projects"])
 async def login_for_access_token(
-    username:str, password:SecretStr, project:str, description:str
+    username:str, password:SecretStr, project:str, description:str=""
 ) -> dict[str, str]:
     username = username.lower().strip()
     if not authenticate_user(username, password.get_secret_value()):
@@ -134,23 +134,28 @@ async def login_for_access_token(
         )
 
     project = project.lower().strip().replace(" ", "_")
-    document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index=PROJECTS_INDEX, custom_mapping=INDEX_SETTINGS)
+
     try:
-        #response = document_store.client.search(index=PROJECTS_INDEX, body={"query": {"match": {"project": project}}})
-        if document_store.client.exists(index=project):
+        #
+        document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index=PROJECTS_INDEX, custom_mapping=INDEX_SETTINGS)
+        response = document_store.client.search(index=PROJECTS_INDEX, body={"query": {"match": {"project": project}}})
+        if response['hits']['total']['value'] > 0:
             document_store.client.close()
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,
                 detail="Project already exists!",
             )
         else:
+            print("1")
             document_store.client.index(index=PROJECTS_INDEX,
                                         body={"project": project, "description": description, "user": username})
             document_store.client.close()
+            print("2")
             document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index=project)
+            print("3")
             document_store.client.close()
     except Exception as e:
-        document_store.client.close()
+        print(e)
         raise HTTPException(
             status_code=HTTPStatus.FAILED_DEPENDENCY,
             detail="Error in database",
