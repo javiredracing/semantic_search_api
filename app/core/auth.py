@@ -3,16 +3,15 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from http import HTTPStatus
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
 from jose import jwt, JWTError
 from ldap3 import Server, Connection
 from pydantic import BaseModel, SecretStr
-from starlette.datastructures import Secret
 
 from app.core import config
 from app.core.config import LDAP_dc, LDAP_ou, API_USERNAME, API_PASSWORD, LDAP_server, DB_HOST, PROJECTS_INDEX, \
-    INDEX_SETTINGS
+    INDEX_SETTINGS, ADMIN_USERS
 
 
 class Token(BaseModel):
@@ -91,23 +90,50 @@ def decode_access_token(token: str) -> str:
 
     return project_index
 
-
-@router.post("/create", response_model=Token)
-async def login_for_access_token(
-    username:str, password:SecretStr, project:str, description:str
-) -> dict[str, str]:
+@router.post("/list",  tags=["projects"])
+async def list_projects(username:str, password:SecretStr,) -> list:
     username = username.lower().strip()
-    user = authenticate_user(
+    isSuperuser = False
+    if authenticate_superuser(username, password.get_secret_value()):
+        isSuperuser = True
+    elif not authenticate_user(
         username,
         password.get_secret_value(),
-    )
-
-    if not user:
+    ):
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="Incorrect username or password",
         )
-    project = project.lower().strip()
+
+    try:
+        document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index=PROJECTS_INDEX, custom_mapping=INDEX_SETTINGS)
+        query = {"query": {"match": {"username": username}}}
+        if isSuperuser or username in ADMIN_USERS:
+            query = {"query": {"match_all": {}}}
+
+        response = document_store.client.search(index=PROJECTS_INDEX, body=query)
+        # for hit in response['hits']['hits']:
+        #     print(hit['_source'])
+        return [hit['_source'] for hit in response['hits']['hits']]
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=HTTPStatus.FAILED_DEPENDENCY,
+            detail="Error in database",
+        )
+
+@router.post("/create", response_model=Token, tags=["projects"])
+async def login_for_access_token(
+    username:str, password:SecretStr, project:str, description:str
+) -> dict[str, str]:
+    username = username.lower().strip()
+    if not authenticate_user(username, password.get_secret_value()):
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Incorrect username or password",
+        )
+
+    project = project.lower().strip().replace(" ", "_")
     document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index=PROJECTS_INDEX, custom_mapping=INDEX_SETTINGS)
     try:
         #response = document_store.client.search(index=PROJECTS_INDEX, body={"query": {"match": {"project": project}}})
@@ -120,6 +146,9 @@ async def login_for_access_token(
         else:
             document_store.client.index(index=PROJECTS_INDEX,
                                         body={"project": project, "description": description, "user": username})
+            document_store.client.close()
+            document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index=project)
+            document_store.client.close()
     except Exception as e:
         document_store.client.close()
         raise HTTPException(
@@ -127,7 +156,6 @@ async def login_for_access_token(
             detail="Error in database",
         )
 
-    document_store.client.close()
     access_token_expires = timedelta(
         seconds=config.API_ACCESS_TOKEN_EXPIRE_MINUTES,
     )
@@ -136,3 +164,6 @@ async def login_for_access_token(
         expires_delta=access_token_expires,
     )
     return {"access_token": access_token, "project": project}
+
+
+#INDEX_SETTINGS = {"settings": {"number_of_shards": 1, "number_of_replicas": 0 },"mappings": {"properties": {"name": {"type": "text", "analyzer": "standard"}, "description": {"type": "text","analyzer": "standard"},"user": {"type": "keyword"}}}}
