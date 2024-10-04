@@ -172,4 +172,100 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
         result.append(doc.to_dict())
     docs_context = getContext(result, params.context_size, document_store)
     final_result = {"answer": completion.choices[0].text, "document": docs_context}
+    document_store.client.close()
     return final_result
+
+
+@router.post("/documents/show/", tags=["documents"])
+def show_documents(filters: FilterRequest):
+    """
+    This endpoint allows you to retrieve documents contained in your document store.
+    You can filter the documents to retrieve by metadata (like the document's name),
+    or provide an empty JSON object to clear the document store.
+
+    Filter example:
+
+    To get all documents you should provide an empty dict, like:`'{"filters": {}}`
+
+    `{"filters": { "operator": "AND",
+      			"conditions": [
+        			{"field": "meta.name", "operator": "==", "value": "2019"},
+        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]}
+      					]
+    			   }
+  		      }`
+    """
+    project_index = decode_access_token(filters.token)
+    print(project_index)
+    document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
+    prediction = document_store.filter_documents(filters=filters.filters)
+    result = []
+    for doc in prediction:
+        doc_dict = doc.to_dict()
+        del doc_dict["embedding"]
+        result.append(doc_dict)
+    document_store.client.close()
+    # print_documents(prediction, max_text_len=100, print_name=True, print_meta=True)
+    return result
+
+
+@router.post("/documents/name_list/", tags=["documents"])
+def list_documents_name(filters: FilterRequest):
+    """
+       This endpoint allows you to retrieve the filename of all documents loaded.
+       You can filter the documents to retrieve by metadata (like the document's name),
+       or provide an empty JSON object to clear the document store.
+
+       Filter example:
+
+       To get all documents you should provide an empty dict, like:`'{"filters": {}}`
+
+       `{"filters": { "operator": "AND",
+                   "conditions": [
+                       {"field": "name", "operator": "==", "value": "2019"},
+                       {"field": "companies", "operator": "in", "value": ["BMW", "Mercedes"]}
+                           ]
+                      }
+                 }`
+   """
+    # print(filters.filters)
+    project_index = decode_access_token(filters.token)
+    print(project_index)
+    document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
+    prediction = document_store.filter_documents(filters=filters.filters)
+
+    res = []
+    for doc in prediction:
+        res.append(doc.meta["name"])
+    res = list(set(res))
+    document_store.client.close()
+    return res
+
+
+@router.post("/documents/delete/", tags=["documents"])
+def delete_documents(filters: FilterRequest):
+    """
+    This endpoint allows you to delete documents contained in your document store.
+    You can filter the documents to delete by metadata (like the document's name),
+    or provide an empty JSON object to clear the document store.
+
+    Filter example:
+
+    To get all documents you should provide an empty dict, like:`'{"filters": {}}`
+
+    `{"filters": { "operator": "AND",
+      			"conditions": [
+        			{"field": "name", "operator": "==", "value": "2019"},
+        			{"field": "companies", "operator": "in", "value": ["BMW", "Mercedes"]}
+      					]
+    			   }
+  		      }`
+    """
+    project_index = decode_access_token(filters.token)
+    print(project_index)
+    document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
+    prediction = document_store.filter_documents(filters=filters.filters)
+    ids = [doc.id for doc in prediction]
+    document_store.delete_documents(document_ids=ids)
+    document_store.client.close()
+    return True
