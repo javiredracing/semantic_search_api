@@ -4,11 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a2cb3f51-c35e-4e5d-befd-71be4c797ce5" name="Changes" comment="Create tokens bug corrected">
+    <list default="true" id="a2cb3f51-c35e-4e5d-befd-71be4c797ce5" name="Changes" comment="Search implemented, list projects revised">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apis/api_documents/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/apis/api_documents/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/core/auth.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/auth.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/core/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apis/api_llm/llm_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/apis/api_llm/llm_utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/routes/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -116,7 +114,15 @@
       <option name="project" value="LOCAL" />
       <updated>1728054779339</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Search implemented, list projects revised">
+      <option name="closed" value="true" />
+      <created>1728058180295</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1728058180295</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -149,6 +155,7 @@
     <MESSAGE value="Create token" />
     <MESSAGE value="Create and list tokens" />
     <MESSAGE value="Create tokens bug corrected" />
-    <option name="LAST_COMMIT_MESSAGE" value="Create tokens bug corrected" />
+    <MESSAGE value="Search implemented, list projects revised" />
+    <option name="LAST_COMMIT_MESSAGE" value="Search implemented, list projects revised" />
   </component>
 </project>

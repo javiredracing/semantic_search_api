@@ -4,13 +4,16 @@ from typing import Annotated, Optional, Dict
 
 from fastapi import APIRouter, Body
 import requests
+from haystack.components.builders import PromptBuilder
 from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
+from openai import OpenAI
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.responses import RedirectResponse
 
 from app.apis.api_documents.utils import getContext, searchInDocstore
+from app.apis.api_llm.llm_utils import TEMPLATE_ASK
 from app.core.auth import decode_access_token
-from app.core.config import EMBEDDINGS_SERVER, DB_HOST, OLLAMA_SERVER, AUDIO_TRANSCRIBE_SERVER
+from app.core.config import EMBEDDINGS_SERVER, DB_HOST, OLLAMA_SERVER, AUDIO_TRANSCRIBE_SERVER, LLM_MODEL
 
 router = APIRouter()
 
@@ -84,7 +87,7 @@ def check_status():
 @router.post("/search/", tags=["search"])
 def search_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
     """
-    This endpoint receives the question as a string and allows the requester to set
+    Receives the question as a string and allows the requester to set
     additional parameters that will be passed on to the system to get a set of most relevant document pieces.
     Depending on the context size, it return previous and later paragraphs from documents
 
@@ -114,3 +117,59 @@ def search_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
     docs_context = getContext(result, params.context_size, document_store)
     document_store.client.close()
     return docs_context
+
+
+@router.post("/ask/", tags=["search"])
+def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
+    """
+    Receives the question as a string and allows the requester to set
+    additional parameters that will be passed on to the system to get a set of most releveant anwsers.
+
+    Filter example:
+
+    To get all documents you should provide an empty dict, like:`'{"filters": {}}`
+
+    `{"filters": { "operator": "AND",
+      			"conditions": [
+        			{"field": "name", "operator": "==", "value": "2019"},
+        			{"field": "companies", "operator": "in", "value": ["BMW", "Mercedes"]}
+      					]
+    			   }
+  		      }`
+    """
+    project_index = decode_access_token(params.token)
+    print(project_index)
+    document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
+    myDocs = searchInDocstore(params, document_store)
+    if myDocs is None:
+        return {"answer": "None", "document": []}
+
+    grouped_docs = {}
+    for doc in myDocs:
+        name = doc.meta["name"]
+        doc.content = doc.content.replace('\r\n', '')
+        # Si el nombre no está en el diccionario, lo agrega con un contenido vacío
+        if name not in grouped_docs:
+            grouped_docs[name] = []
+        # Agrega el contenido al arreglo correspondiente al nombre
+        grouped_docs[name].append(doc.content)
+
+
+
+    builder = PromptBuilder(template=TEMPLATE_ASK)
+    my_prompt = builder.run(myDocs=grouped_docs, query=params.query.strip())["prompt"].strip()
+    client = OpenAI(base_url=OLLAMA_SERVER + 'v1/', api_key='ollama', )
+    completion = client.completions.create(
+        model=LLM_MODEL,
+        prompt=my_prompt,
+        temperature=0.1,
+        max_tokens=-1,
+        stream=False
+    )
+
+    result = []
+    for doc in myDocs:
+        result.append(doc.to_dict())
+    docs_context = getContext(result, params.context_size, document_store)
+    final_result = {"answer": completion.choices[0].text, "document": docs_context}
+    return final_result
