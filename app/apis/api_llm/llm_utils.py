@@ -1,4 +1,4 @@
-TEMPLATE_ASK="""
+TEMPLATE_ASK_MULTIPLE_DOCS="""
 Se proporciona información procedente de cada documento:
     
 {% for name, content in myDocs.items() %}
@@ -10,7 +10,18 @@ Se proporciona información procedente de cada documento:
 {% endfor %}
     
 Por cada uno de los documentos proporcionados, responde a la siguiente pregunta en el mismo idioma: {{ query }}. No te inventes nada.
-    """
+"""
+
+TEMPLATE_ASK_SINGLE_DOC = """
+Esta información procede del documento {{doc_name}}:
+
+{% for text in content %}
+    - {{text}}
+
+{% endfor %}   
+
+A partir de la información proporcionada, responde a la siguiente pregunta: {{ query }}. No te inventes nada.
+"""
 
 TEMPLATE_SUMMARY = """
 Haz un resumen conciso y claro que capture los puntos más importantes del siguiente contexto. No te inventes nada. Responde solo con el resumen. Si no puedes hacerlo, no pongas nada.

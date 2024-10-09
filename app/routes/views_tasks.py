@@ -150,8 +150,8 @@ def get_SRT_traslated(file_name: str, lang: str, token:str):
                 plain_res += f"{str(i + 1)}\n"
                 text1 = f"{doc.meta['start_time']} --> {doc.meta['end_time']}\n"
                 plain_res += text1
-                text1 = f"{doc.meta['speaker']}: {doc.content}\n"
-                plain_res += text1
+                #text1 = f"{doc.meta['speaker']}: {doc.content}\n"
+                #plain_res += text1
                 if i < len(srt_file):
                     text1 = f"{doc.meta['speaker']}: {srt_file[i]}\n\n"
                 else:

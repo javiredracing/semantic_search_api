@@ -55,7 +55,11 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        access_token_expires = timedelta(
+            minutes=config.API_ACCESS_TOKEN_EXPIRE_MINUTES,
+        )
+        #expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.utcnow() + access_token_expires
 
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
@@ -111,6 +115,7 @@ async def list_projects(username:str, password:SecretStr,) -> list:
 
         response = document_store.client.search(index=PROJECTS_INDEX, body=query)
         result = []
+
         for hit in response['hits']['hits']:
             project = hit['_source']["project"]
             my_token= create_access_token(data={"sub": project})
@@ -160,11 +165,7 @@ async def login_for_access_token(
             detail="Error in database",
         )
 
-    access_token_expires = timedelta(
-        seconds=config.API_ACCESS_TOKEN_EXPIRE_MINUTES,
-    )
     access_token = create_access_token(
-        data={"sub": project},  # type: ignore
-        expires_delta=access_token_expires,
+        data={"sub": project}
     )
     return {"access_token": access_token, "project": project}

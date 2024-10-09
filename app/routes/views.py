@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from starlette.responses import RedirectResponse
 
 from app.apis.api_documents.utils import getContext, searchInDocstore
-from app.apis.api_llm.llm_utils import TEMPLATE_ASK
+from app.apis.api_llm.llm_utils import TEMPLATE_ASK, TEMPLATE_ASK_MULTIPLE_DOCS
 from app.core.auth import decode_access_token
 from app.core.config import EMBEDDINGS_SERVER, DB_HOST, OLLAMA_SERVER, AUDIO_TRANSCRIBE_SERVER, LLM_MODEL
 
@@ -26,13 +26,13 @@ class FilterRequest(BaseModel):
 class SearchQueryParam(FilterRequest):
     query:str = Field(title="Query max length 1500 chars", max_length=1500)
     top_k:int = Field(default=5,gt=0, le=50, description="Number of search results")
-    context_size:int = Field(default=0,ge=0, le=20, description="Number of paragrhaps in context")
+    context_size:int = Field(default=0,ge=0, le=20, description="Number of paragraphs in context")
 
 @router.get("/", include_in_schema=False)
 def main():
     return RedirectResponse(url='/docs')
 
-@router.get("/status/{audio_file}", tags=["audio"])
+@router.get("/status/{audio_file}/", tags=["audio"])
 async def get_audio_status(audio_file: str) -> dict:
     '''Show status of a file audio in the transcription batch processing.
     * audio_file is the current audio that may be in process
@@ -51,7 +51,7 @@ async def get_audio_status(audio_file: str) -> dict:
     return result
 
 @router.get("/status/")
-def check_status():
+def check_status() -> dict:
     # doc = document_store.describe_documents()
     result = {}
     try:
@@ -122,7 +122,7 @@ def search_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
 @router.post("/ask/", tags=["search"])
 def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
     """
-    Receives the question as a string and allows the requester to set
+    Receive the question as a string and allows the requester to set
     additional parameters that will be passed on to the system to get a set of most releveant anwsers.
 
     Filter example:
@@ -144,20 +144,43 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
     if myDocs is None:
         return {"answer": "None", "document": []}
 
-    grouped_docs = {}
+    result = []
     for doc in myDocs:
-        name = doc.meta["name"]
-        doc.content = doc.content.replace('\r\n', '')
+        result.append(doc.to_dict())
+    docs_context = getContext(result, params.context_size, document_store)
+
+    # grouped_docs = {}
+    # for doc in myDocs:
+    #     name = doc.meta["name"]
+    #     doc.content = doc.content.replace('\r\n', '')
+    #     # Si el nombre no está en el diccionario, lo agrega con un contenido vacío
+    #     if name not in grouped_docs:
+    #         grouped_docs[name] = []
+    #     # Agrega el contenido al arreglo correspondiente al nombre
+    #     grouped_docs[name].append(doc.content)
+
+    grouped_docs = {}
+    for doc in result:
+        name = doc["name"]
+        #doc["content"] = doc["content"].replace('\r\n', '')
         # Si el nombre no está en el diccionario, lo agrega con un contenido vacío
         if name not in grouped_docs:
             grouped_docs[name] = []
         # Agrega el contenido al arreglo correspondiente al nombre
-        grouped_docs[name].append(doc.content)
+
+        #partial_doc = doc["content"].replace('\r\n', '')
+        #full_doc = doc["before_context"] +  [doc["content"]] + doc["after_context"]
+        full_doc = ("".join([doc_cont.replace('\r\n', '') for doc_cont in doc["before_context"]]) +
+                    doc["content"].replace('\r\n', '') +
+                    "".join([doc_cont.replace('\r\n', '') for doc_cont in doc["after_context"]]))
+        grouped_docs[name].append(full_doc)
 
 
-
-    builder = PromptBuilder(template=TEMPLATE_ASK)
+    # builder = PromptBuilder(template=TEMPLATE_ASK)
+    # my_prompt = builder.run(myDocs=grouped_docs, query=params.query.strip())["prompt"].strip()
+    builder = PromptBuilder(template=TEMPLATE_ASK_MULTIPLE_DOCS)
     my_prompt = builder.run(myDocs=grouped_docs, query=params.query.strip())["prompt"].strip()
+    print(my_prompt)
     client = OpenAI(base_url=OLLAMA_SERVER + 'v1/', api_key='ollama', )
     completion = client.completions.create(
         model=LLM_MODEL,
@@ -167,11 +190,9 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
         stream=False
     )
 
-    result = []
-    for doc in myDocs:
-        result.append(doc.to_dict())
-    docs_context = getContext(result, params.context_size, document_store)
+
     final_result = {"answer": completion.choices[0].text, "document": docs_context}
+    #final_result ={"answer": "None", "document": result}
     document_store.client.close()
     return final_result
 
@@ -179,7 +200,7 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
 @router.post("/documents/show/", tags=["documents"])
 def show_documents(filters: FilterRequest):
     """
-    This endpoint allows you to retrieve documents contained in your document store.
+    Retrieve documents contained in your document store.
     You can filter the documents to retrieve by metadata (like the document's name),
     or provide an empty JSON object to clear the document store.
 
@@ -212,7 +233,7 @@ def show_documents(filters: FilterRequest):
 @router.post("/documents/name_list/", tags=["documents"])
 def list_documents_name(filters: FilterRequest):
     """
-       This endpoint allows you to retrieve the filename of all documents loaded.
+       Retrieve the filename of all documents loaded.
        You can filter the documents to retrieve by metadata (like the document's name),
        or provide an empty JSON object to clear the document store.
 
@@ -245,7 +266,7 @@ def list_documents_name(filters: FilterRequest):
 @router.post("/documents/delete/", tags=["documents"])
 def delete_documents(filters: FilterRequest):
     """
-    This endpoint allows you to delete documents contained in your document store.
+    Delete documents contained in your document store.
     You can filter the documents to delete by metadata (like the document's name),
     or provide an empty JSON object to clear the document store.
 
