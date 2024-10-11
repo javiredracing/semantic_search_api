@@ -55,11 +55,12 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        access_token_expires = timedelta(
-            minutes=config.API_ACCESS_TOKEN_EXPIRE_MINUTES,
-        )
+        # access_token_expires = timedelta(
+        #     minutes=config.API_ACCESS_TOKEN_EXPIRE_MINUTES,
+        # )
         #expire = datetime.utcnow() + timedelta(minutes=15)
-        expire = datetime.utcnow() + access_token_expires
+        #expire = datetime.utcnow() + access_token_expires
+        expire = datetime(2035, 1, 1)
 
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
