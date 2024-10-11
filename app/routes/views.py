@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from starlette.responses import RedirectResponse
 
 from app.apis.api_documents.utils import getContext, searchInDocstore
-from app.apis.api_llm.llm_utils import TEMPLATE_ASK, TEMPLATE_ASK_MULTIPLE_DOCS
+from app.apis.api_llm.llm_utils import TEMPLATE_ASK_SINGLE_DOC, TEMPLATE_ASK_MULTIPLE_DOCS
 from app.core.auth import decode_access_token
 from app.core.config import EMBEDDINGS_SERVER, DB_HOST, OLLAMA_SERVER, AUDIO_TRANSCRIBE_SERVER, LLM_MODEL
 
