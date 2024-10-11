@@ -4,7 +4,7 @@ Se proporciona información procedente de cada documento:
 {% for name, content in myDocs.items() %}
     Documento: {{ name }}        
     {% for text in content %}
-        - {{text}}
+        * {{text}}
         
     {% endfor %}   
 {% endfor %}
@@ -13,10 +13,10 @@ Por cada uno de los documentos proporcionados, responde a la siguiente pregunta 
 """
 
 TEMPLATE_ASK_SINGLE_DOC = """
-Esta información procede del documento {{doc_name}}:
+La siguiente información procede del documento {{doc_name}}:
 
 {% for text in content %}
-    - {{text}}
+    * {{text}}
 
 {% endfor %}   
 
