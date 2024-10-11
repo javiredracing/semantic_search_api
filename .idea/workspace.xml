@@ -4,12 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a2cb3f51-c35e-4e5d-befd-71be4c797ce5" name="Changes" comment="Document functions added">
+    <list default="true" id="a2cb3f51-c35e-4e5d-befd-71be4c797ce5" name="Changes" comment="ask propmt revised">
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_03_10_2024_13_13_[Changes]1/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_03_10_2024_13_13__Changes_1.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apis/api_llm/llm_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/apis/api_llm/llm_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/core/auth.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/auth.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/routes/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/views_tasks.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/views_tasks.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -140,7 +140,39 @@
       <option name="project" value="LOCAL" />
       <updated>1728059667902</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Modified ask for including context&#10;Delta time token forever">
+      <option name="closed" value="true" />
+      <created>1728486452878</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1728486452878</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Fixed date of expiration to 2035">
+      <option name="closed" value="true" />
+      <created>1728657527192</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1728657527192</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Bug fixed">
+      <option name="closed" value="true" />
+      <created>1728657640730</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1728657640730</updated>
+    </task>
+    <task id="LOCAL-00010" summary="ask propmt revised">
+      <option name="closed" value="true" />
+      <created>1728657687418</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1728657687418</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -176,6 +208,10 @@
     <MESSAGE value="Search implemented, list projects revised" />
     <MESSAGE value="Ask function added" />
     <MESSAGE value="Document functions added" />
-    <option name="LAST_COMMIT_MESSAGE" value="Document functions added" />
+    <MESSAGE value="Modified ask for including context&#10;Delta time token forever" />
+    <MESSAGE value="Fixed date of expiration to 2035" />
+    <MESSAGE value="Bug fixed" />
+    <MESSAGE value="ask propmt revised" />
+    <option name="LAST_COMMIT_MESSAGE" value="ask propmt revised" />
   </component>
 </project>

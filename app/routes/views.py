@@ -170,9 +170,12 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
 
         #partial_doc = doc["content"].replace('\r\n', '')
         #full_doc = doc["before_context"] +  [doc["content"]] + doc["after_context"]
-        full_doc = ("".join([doc_cont.replace('\r\n', '') for doc_cont in doc["before_context"]]) +
-                    doc["content"].replace('\r\n', '') +
-                    "".join([doc_cont.replace('\r\n', '') for doc_cont in doc["after_context"]]))
+        full_doc = doc["content"].replace('\r\n', '')
+        if "before_context" in doc and "after_context" in doc:
+            full_doc = ("".join([doc_cont.replace('\r\n', '') for doc_cont in doc["before_context"]]) +
+                    full_doc +
+                        "".join([doc_cont.replace('\r\n', '') for doc_cont in doc["after_context"]]))
+
         grouped_docs[name].append(full_doc)
 
 

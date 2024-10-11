@@ -2,14 +2,12 @@ TEMPLATE_ASK_MULTIPLE_DOCS="""
 Se proporciona información procedente de cada documento:
     
 {% for name, content in myDocs.items() %}
-    Documento: {{ name }}        
+Documento: {{ name }}        
     {% for text in content %}
-        * {{text}}
-        
+        * {{text}}        
     {% endfor %}   
 {% endfor %}
-    
-Por cada uno de los documentos proporcionados, responde a la siguiente pregunta en el mismo idioma: {{ query }}. No te inventes nada.
+Por cada uno de los documentos proporcionados, responde a la siguiente pregunta: {{ query }}. No te inventes nada.
 """
 
 TEMPLATE_ASK_SINGLE_DOC = """
@@ -17,9 +15,7 @@ La siguiente información procede del documento {{doc_name}}:
 
 {% for text in content %}
     * {{text}}
-
 {% endfor %}   
-
 A partir de la información proporcionada, responde a la siguiente pregunta: {{ query }}. No te inventes nada.
 """
 
