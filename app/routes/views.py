@@ -7,6 +7,7 @@ import requests
 from haystack.components.builders import PromptBuilder
 from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
 from openai import OpenAI
+
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.responses import RedirectResponse
 
@@ -183,19 +184,17 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
     # my_prompt = builder.run(myDocs=grouped_docs, query=params.query.strip())["prompt"].strip()
     builder = PromptBuilder(template=TEMPLATE_ASK_MULTIPLE_DOCS)
     my_prompt = builder.run(myDocs=grouped_docs, query=params.query.strip())["prompt"].strip()
-    print(my_prompt)
+
     client = OpenAI(base_url=OLLAMA_SERVER + 'v1/', api_key='ollama', )
-    completion = client.completions.create(
+    response = client.chat.completions.create(
+        messages=[dict(content=my_prompt, role="user")],
         model=LLM_MODEL,
-        prompt=my_prompt,
         temperature=0.1,
-        max_tokens=-1,
+        top_p=0.5,
         stream=False
     )
 
-
-    final_result = {"answer": completion.choices[0].text, "document": docs_context}
-    #final_result ={"answer": "None", "document": result}
+    final_result = {"answer": response.choices[0].message.content, "document": docs_context}
     document_store.client.close()
     return final_result
 

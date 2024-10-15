@@ -55,30 +55,31 @@ def get_summary(file_name: str, token:str):
                 # print(my_prompt)
                 custom_docs = ""
                 #LLM CALL
-                completion = client.completions.create(
+                completion = client.chat.completions.create(
+                    messages=[dict(content=my_prompt, role="user")],
                     model=LLM_MODEL,
-                    prompt=my_prompt,
                     temperature=0.1,
-                    max_tokens=-1,
+                    top_p=0.5,
                     stream=False
                 )
-                response.append("\n\n" + completion.choices[0].text)
+
+                response.append("\n\n" + completion.choices[0].message.content)
 
         if not custom_docs.strip().endswith((".", ",", "!", "?", ";")):
             custom_docs = custom_docs.strip() + "."
         if len(custom_docs) > 0:
             my_prompt = builder.run(myDocs=custom_docs)["prompt"].strip()
             custom_docs = ""
-            completion = client.completions.create(
+            completion = client.chat.completions.create(
+                messages=[dict(content=my_prompt, role="user")],
                 model=LLM_MODEL,
-                prompt=my_prompt,
                 temperature=0.1,
-                max_tokens=-1,
+                top_p=0.5,
                 stream=False
             )
             #if agent_response is None:
             #    return ""
-            response.append("\n\n" + completion.choices[0].text)
+            response.append("\n\n" + completion.choices[0].message.content)
 
         return ''.join(response)
     else:
@@ -125,17 +126,14 @@ def get_SRT_traslated(file_name: str, lang: str, token:str):
         srt_file = []
         client = OpenAI(base_url=OLLAMA_SERVER + 'v1/', api_key='ollama', )
         for prompt in prompt_list:
-            #agent_result = launchAgent(prompt, options)
-            completion = client.completions.create(
+            completion = client.chat.completions.create(
+                messages=[dict(content=prompt, role="user")],
                 model=LLM_MODEL,
-                prompt=prompt,
                 temperature=0.1,
-                max_tokens=-1,
                 top_p=0.5,
                 stream=False
             )
-
-            data = completion.choices[0].text.split("\n")
+            data = completion.choices[0].message.content.split("\n")
             # print(data)
             final_list = [i for i in data if i]
             for item in final_list[1:]:
