@@ -148,43 +148,40 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
     result = []
     for doc in myDocs:
         result.append(doc.to_dict())
-    docs_context = getContext(result, params.context_size, document_store)
+    docs_context = getContext(result, params.context_size, document_store,include_paragraphs=True)
 
-    # grouped_docs = {}
-    # for doc in myDocs:
-    #     name = doc.meta["name"]
-    #     doc.content = doc.content.replace('\r\n', '')
-    #     # Si el nombre no está en el diccionario, lo agrega con un contenido vacío
-    #     if name not in grouped_docs:
-    #         grouped_docs[name] = []
-    #     # Agrega el contenido al arreglo correspondiente al nombre
-    #     grouped_docs[name].append(doc.content)
-
+    #prepara el texto para enviar al llm
     grouped_docs = {}
-    for doc in result:
+    #Agrupa documentos por nombre incluyendo el contexto
+    for doc in docs_context:
         name = doc["name"]
-        #doc["content"] = doc["content"].replace('\r\n', '')
         # Si el nombre no está en el diccionario, lo agrega con un contenido vacío
         if name not in grouped_docs:
             grouped_docs[name] = []
         # Agrega el contenido al arreglo correspondiente al nombre
-
-        #partial_doc = doc["content"].replace('\r\n', '')
-        #full_doc = doc["before_context"] +  [doc["content"]] + doc["after_context"]
-        full_doc = doc["content"].replace('\r\n', '')
+        grouped_docs[name].append((doc["content"], doc["paragraph"]))
         if "before_context" in doc and "after_context" in doc:
-            full_doc = ("".join([doc_cont.replace('\r\n', '') for doc_cont in doc["before_context"]]) +
-                    full_doc +
-                        "".join([doc_cont.replace('\r\n', '') for doc_cont in doc["after_context"]]))
+            grouped_docs[name].extend(doc["before_context"])
+            grouped_docs[name].extend(doc["after_context"])
 
-        grouped_docs[name].append(full_doc)
+    for name, content in grouped_docs.items():
+        tuplas_sin_duplicados = list(set(content))  #elimina parrafos duplicados
+        ordenadas = sorted(tuplas_sin_duplicados, key=lambda x: x[1])   #ordena de mayor a menor los parrafos
+        list_temp= []
+        #agrupa por parrafos contiguos
+        for i, value in enumerate(ordenadas):
+            if i == 0 or (value[1] - 1 != ordenadas[i - 1][1]):
+                list_temp.append(value[0])
+            else:
+                list_temp[-1] += value[0]
+
+        print("TOTAL parrafos3",len (list_temp))
+        grouped_docs[name] =  list_temp
 
 
-    # builder = PromptBuilder(template=TEMPLATE_ASK)
-    # my_prompt = builder.run(myDocs=grouped_docs, query=params.query.strip())["prompt"].strip()
     builder = PromptBuilder(template=TEMPLATE_ASK_MULTIPLE_DOCS)
     my_prompt = builder.run(myDocs=grouped_docs, query=params.query.strip())["prompt"].strip()
-
+    print(my_prompt)
     client = OpenAI(base_url=OLLAMA_SERVER + 'v1/', api_key='ollama', )
     response = client.chat.completions.create(
         messages=[dict(content=my_prompt, role="user")],
@@ -193,6 +190,12 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
         top_p=0.5,
         stream=False
     )
+
+    #remove t-uplas from contexts arrays
+    for doc in docs_context:
+        if "before_context" in doc and "after_context" in doc:
+            doc["before_context"] = [item[0] for item in doc["before_context"]]
+            doc["after_context"] = [item[0] for item in doc["after_context"]]
 
     final_result = {"answer": response.choices[0].message.content, "document": docs_context}
     document_store.client.close()

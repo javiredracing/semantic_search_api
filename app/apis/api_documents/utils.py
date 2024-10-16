@@ -3,7 +3,7 @@ from haystack_integrations.components.retrievers.elasticsearch import Elasticsea
     ElasticsearchEmbeddingRetriever
 from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
 
-from app.core.config import DB_HOST, EMBEDDINGS_SERVER, LLM_MODEL
+from app.core.config import EMBEDDINGS_SERVER, LLM_MODEL
 
 
 def get_detailed_instruct(query: str) -> str:
@@ -39,7 +39,7 @@ def searchInDocstore(params, document_store:ElasticsearchDocumentStore):
     #print_documents(prediction, max_text_len=query.max_text_len, print_name=True, print_meta=True)
     return prediction
 
-def getContext(docs, context_size, document_store:ElasticsearchDocumentStore):
+def getContext(docs, context_size, document_store:ElasticsearchDocumentStore, include_paragraphs:bool = False):
     if context_size > 0:
         for doc in docs:
             currentParagraph = doc["paragraph"]
@@ -57,7 +57,13 @@ def getContext(docs, context_size, document_store:ElasticsearchDocumentStore):
             doc["after_context"] = []
             for context in getDocuments:
                 if context.meta["paragraph"] < currentParagraph:
-                    doc["before_context"].append(context.content)
+                    if include_paragraphs:
+                        doc["before_context"].append((context.content, context.meta["paragraph"]))
+                    else:
+                        doc["before_context"].append(context.content)
                 else:
-                    doc["after_context"].append(context.content)
+                    if include_paragraphs:
+                        doc["after_context"].append((context.content, context.meta["paragraph"]))
+                    else:
+                        doc["after_context"].append(context.content)
     return docs
