@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from http import HTTPStatus
+from typing import Optional, List
 
 from fastapi import APIRouter, HTTPException
 from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
@@ -14,14 +16,25 @@ from app.core.config import LDAP_dc, LDAP_ou, API_USERNAME, API_PASSWORD, LDAP_s
     INDEX_SETTINGS, ADMIN_USERS
 
 
-class Token(BaseModel):
-    access_token: str
+#@dataclass()
+class Project(BaseModel):
     project: str
+    token: str
+    def __init__(self, token: str, project: str) -> None:
+        super().__init__(token=token, project=project)
 
+#@dataclass
+class ProjectInfo(BaseModel):
+    project: str
+    user:str
+    description:str
+    token: str
+    def __init__(self, user: str, token:str,project:str,description: Optional[str]="",) -> None:
+        super().__init__(token=token,project=project,user=user,description=description )
 
 router = APIRouter()
 
-def authenticate_superuser(username:str,password:str):
+def authenticate_superuser(username:str,password:str) -> bool:
     return username.lower().strip() == API_USERNAME and password == API_PASSWORD
 
 
@@ -94,7 +107,7 @@ def decode_access_token(token: str) -> str:
     return project_index
 
 @router.post("/list",  tags=["projects"])
-async def list_projects(username:str, password:SecretStr,) -> list:
+async def list_projects(username:str, password:SecretStr,) -> list[ProjectInfo]:
     username = username.lower().strip()
     isSuperuser = False
     if authenticate_superuser(username, password.get_secret_value()):
@@ -119,22 +132,26 @@ async def list_projects(username:str, password:SecretStr,) -> list:
 
         for hit in response['hits']['hits']:
             project = hit['_source']["project"]
-            my_token= create_access_token(data={"sub": project})
-            hit['_source']["token"] = my_token
-            result.append(hit['_source'])
+            user_project = hit['_source']["user"]
+            my_token= create_access_token(data={"sub": project,"user":user_project})
+            # hit['_source']["token"] = my_token
+            # result.append(hit['_source'])
+            info=ProjectInfo(project=project,user=user_project,token=my_token,description= hit['_source']["description"])
+            result.append(info)
         document_store.client.close()
         return result
 
     except Exception as e:
+        print(e)
         raise HTTPException(
             status_code=HTTPStatus.FAILED_DEPENDENCY,
             detail="Error in database",
         )
 
-@router.post("/create", response_model=Token, tags=["projects"])
+@router.post("/create", response_model=Project, tags=["projects"])
 async def login_for_access_token(
     username:str, password:SecretStr, project:str, description:str=""
-) -> dict[str, str]:
+) -> Project:
     username = username.lower().strip()
     if not authenticate_user(username, password.get_secret_value()):
         raise HTTPException(
@@ -167,6 +184,7 @@ async def login_for_access_token(
         )
 
     access_token = create_access_token(
-        data={"sub": project}
+        data={"sub": project, "user":username}
     )
-    return {"access_token": access_token, "project": project}
+
+    return Project(token=access_token, project=project)

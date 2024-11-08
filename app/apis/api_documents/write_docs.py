@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 import concurrent
-import os
-import shutil
 import time
 from datetime import datetime
 
 import requests
-import validators
 from haystack import Document
 from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
 
@@ -31,17 +28,18 @@ def document_manager(files, metadata, index:str):
 
     end = time.process_time()
     print("Processing time:", end - start)
+    #TODO time in logging
 
 
-def audio_manager(files, metadata, index:str):
-    if len(files) > 0:
-        try:
-            req = requests.post(AUDIO_TRANSCRIBE_SERVER + "transcribe/", json={"audio_path": files})  #transcribe audio files
-            req.raise_for_status()
-            #print(req.json())
-        except requests.exceptions.RequestException as e:
-            print("Error!", str(e))
-            #return "Error!"
+# def audio_manager(files, metadata, index:str):
+#     if len(files) > 0:
+#         try:
+#             req = requests.post(AUDIO_TRANSCRIBE_SERVER + "transcribe/", json={"audio_path": files})  #transcribe audio files
+#             req.raise_for_status()
+#             #print(req.json())
+#         except requests.exceptions.RequestException as e:
+#             print("Error!", str(e))
+#             #return "Error!"
 
 
 def processFile(file, ext, metadata, index:str):
@@ -98,7 +96,7 @@ def generateSRT_doc(filename:str, srt_text:str, metadata:dict, index:str):
                     currentMetadata = srt_json[i]["metadata"]
 
                     currentMetadata.update(metadata)
-                    currentMetadata.update({"timestamp": dt_string, "page": 1, "name": filename, "file_type": "audio/"})
+                    currentMetadata.update({"timestamp": dt_string, "page": 1, "name": filename, "file_type": "srt"})
                     docs.append(Document(content=text, meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
         except requests.exceptions.RequestException as e:
             print("ERROR!")
@@ -137,20 +135,3 @@ def generate_doc(file, texts, metadata, pages, index:str):
         document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")  # TODO: Replace index
         document_store.write_documents(docs)
         document_store.client.close()
-
-
-def download_file(url):
-    if validators.url(url):
-        filename = url.split("/")[-1]
-        audio_file = os.path.join(AUDIO_PATH, filename)
-        if not os.path.isfile(audio_file):
-            try:
-                with requests.get(url, stream=True, timeout=10) as r:
-                    with open(audio_file, 'wb') as f:
-                        shutil.copyfileobj(r.raw, f)
-                return audio_file
-            except requests.exceptions.RequestException as e:
-                print("Error uploading the file " + filename + ": " + str(e))
-            except Exception as err:
-                print("Error uploading the file " + filename + ": " + str(err))
-    return ""

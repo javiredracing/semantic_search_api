@@ -2,15 +2,15 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from app.core import auth
-from app.routes import views, views_upload, views_tasks
+from app.routes import views, views_upload, views_agents
 
 description = """Ask questions about the documents provided. 🚀
 Model Max Sequence Length: **512**.
 Services required: 
 * infinity service (https://github.com/michaelfeil/infinity)
 * Elastic search service.
-* Ollama service.
-* Diarization service."""
+* vLLM service.
+"""
 
 tags_metadata = [
     {
@@ -28,10 +28,6 @@ tags_metadata = [
     {
         "name": "documents",
         "description": "Manage documents",
-    },
-    {
-        "name": "audio",
-        "description": "Manage audio",
     },
     {
         "name": "agents",
@@ -68,4 +64,4 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(views.router)
 app.include_router(views_upload.router)
-app.include_router(views_tasks.router)
+app.include_router(views_agents.router)

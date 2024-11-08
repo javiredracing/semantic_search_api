@@ -33,23 +33,6 @@ class SearchQueryParam(FilterRequest):
 def main():
     return RedirectResponse(url='/docs')
 
-@router.get("/status/{audio_file}/", tags=["audio"])
-async def get_audio_status(audio_file: str) -> dict:
-    '''Show status of a file audio in the transcription batch processing.
-    * audio_file is the current audio that may be in process
-    '''
-    result = {
-        "audio_file": audio_file,
-        "status": "ERROR!"
-    }
-    try:
-        res = requests.get(AUDIO_TRANSCRIBE_SERVER + "status/" + audio_file)
-        res.raise_for_status()
-        result = res.json()
-    except requests.exceptions.RequestException as e:
-        result.update({"status": "ERROR! " + str(e)})
-
-    return result
 
 @router.get("/status/")
 def check_status() -> dict:
@@ -76,21 +59,22 @@ def check_status() -> dict:
     except requests.exceptions.RequestException as e:
         result.update({"llm_status": "ERROR! " + str(e)})
 
-    try:
-        res = requests.get(AUDIO_TRANSCRIBE_SERVER + "status/")
-        res.raise_for_status()
-        result.update({"diarization_status": res.json()})
-    except requests.exceptions.RequestException as e:
-        result.update({"diarization_status": "ERROR! " + str(e)})
+    # try:
+    #     res = requests.get(AUDIO_TRANSCRIBE_SERVER + "status/")
+    #     res.raise_for_status()
+    #     result.update({"diarization_status": res.json()})
+    # except requests.exceptions.RequestException as e:
+    #     result.update({"diarization_status": "ERROR! " + str(e)})
 
     return result
-#
+
+
 @router.post("/search/", tags=["search"])
 def search_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
     """
     Receives the question as a string and allows the requester to set
     additional parameters that will be passed on to the system to get a set of most relevant document pieces.
-    Depending on the context size, it return previous and later paragraphs from documents
+    Depending on the context size, it returns previous and later paragraphs from documents
 
     Filter example:
 
@@ -124,7 +108,7 @@ def search_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
 def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
     """
     Receive the question as a string and allows the requester to set
-    additional parameters that will be passed on to the system to get a set of most releveant anwsers.
+    additional parameters that will be passed on to the system to get a set of most relevant answers.
 
     Filter example:
 
@@ -166,7 +150,7 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
 
     for name, content in grouped_docs.items():
         tuplas_sin_duplicados = list(set(content))  #elimina parrafos duplicados
-        ordenadas = sorted(tuplas_sin_duplicados, key=lambda x: x[1])   #ordena de mayor a menor los parrafos
+        ordenadas = sorted(tuplas_sin_duplicados, key=lambda x: x[1])   #ordena de menor a mayor los parrafos
         list_temp= []
         #agrupa por parrafos contiguos
         for i, value in enumerate(ordenadas):
@@ -175,13 +159,12 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
             else:
                 list_temp[-1] += value[0]
 
-        print("TOTAL parrafos3",len (list_temp))
         grouped_docs[name] =  list_temp
 
 
     builder = PromptBuilder(template=TEMPLATE_ASK_MULTIPLE_DOCS)
     my_prompt = builder.run(myDocs=grouped_docs, query=params.query.strip())["prompt"].strip()
-    print(my_prompt)
+
     client = OpenAI(base_url=OLLAMA_SERVER + 'v1/', api_key='ollama', )
     response = client.chat.completions.create(
         messages=[dict(content=my_prompt, role="user")],
@@ -202,7 +185,7 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
     return final_result
 
 
-@router.post("/documents/show/", tags=["documents"])
+@router.post("/show/", tags=["documents"])
 def show_documents(filters: FilterRequest):
     """
     Retrieve documents contained in your document store.
@@ -215,8 +198,8 @@ def show_documents(filters: FilterRequest):
 
     `{"filters": { "operator": "AND",
       			"conditions": [
-        			{"field": "meta.name", "operator": "==", "value": "2019"},
-        			{"field": "meta.companies", "operator": "in", "value": ["BMW", "Mercedes"]}
+        			{"field": "name", "operator": "==", "value": "2019"},
+        			{"field": "companies", "operator": "in", "value": ["BMW", "Mercedes"]}
       					]
     			   }
   		      }`
@@ -235,7 +218,7 @@ def show_documents(filters: FilterRequest):
     return result
 
 
-@router.post("/documents/name_list/", tags=["documents"])
+@router.post("/name_list/", tags=["documents"])
 def list_documents_name(filters: FilterRequest):
     """
        Retrieve the filename of all documents loaded.
@@ -268,7 +251,7 @@ def list_documents_name(filters: FilterRequest):
     return res
 
 
-@router.post("/documents/delete/", tags=["documents"])
+@router.post("/delete/", tags=["documents"])
 def delete_documents(filters: FilterRequest):
     """
     Delete documents contained in your document store.
