@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Annotated, Optional, Dict
 
 from fastapi import APIRouter, Body
@@ -29,6 +30,12 @@ class SearchQueryParam(FilterRequest):
     top_k:int = Field(default=5,gt=0, le=50, description="Number of search results")
     context_size:int = Field(default=0,ge=0, le=20, description="Number of paragraphs in context")
 
+@dataclass
+class ReturnAnswer(BaseModel):
+    answer:str
+    documents:list[dict]
+
+
 @router.get("/", include_in_schema=False)
 def main():
     return RedirectResponse(url='/docs')
@@ -52,13 +59,13 @@ def check_status() -> dict:
     except requests.exceptions.RequestException as e:
         result.update({"db_status": "ERROR! " + str(e)})
 
-    try:
-        res = requests.get(OLLAMA_SERVER + "api/ps")
-        res.raise_for_status()
-        result.update({"llm_status": res.json()})
-    except requests.exceptions.RequestException as e:
-        result.update({"llm_status": "ERROR! " + str(e)})
-
+    # try:
+    #     res = requests.get(OLLAMA_SERVER + "api/ps")
+    #     res.raise_for_status()
+    #     result.update({"llm_status": res.json()})
+    # except requests.exceptions.RequestException as e:
+    #     result.update({"llm_status": "ERROR! " + str(e)})
+    #TODO: VLLM health endpoint
     # try:
     #     res = requests.get(AUDIO_TRANSCRIBE_SERVER + "status/")
     #     res.raise_for_status()
@@ -70,7 +77,7 @@ def check_status() -> dict:
 
 
 @router.post("/search/", tags=["search"])
-def search_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
+def search_document(params: Annotated[SearchQueryParam, Body(embed=True)])->list[dict]:
     """
     Receives the question as a string and allows the requester to set
     additional parameters that will be passed on to the system to get a set of most relevant document pieces.
@@ -92,7 +99,7 @@ def search_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
     print(project_index)
     document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
     docs = searchInDocstore(params, document_store)
-
+    print(docs)
     result = []
     if docs is None:
         return result
@@ -105,7 +112,7 @@ def search_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
 
 
 @router.post("/ask/", tags=["search"])
-def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
+def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]) -> ReturnAnswer:
     """
     Receive the question as a string and allows the requester to set
     additional parameters that will be passed on to the system to get a set of most relevant answers.
@@ -127,7 +134,8 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
     document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
     myDocs = searchInDocstore(params, document_store)
     if myDocs is None:
-        return {"answer": "None", "document": []}
+        #return {"answer": "None", "documents": []}
+        return ReturnAnswer(answer="None",documents=[])
 
     result = []
     for doc in myDocs:
@@ -180,13 +188,14 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]):
             doc["before_context"] = [item[0] for item in doc["before_context"]]
             doc["after_context"] = [item[0] for item in doc["after_context"]]
 
-    final_result = {"answer": response.choices[0].message.content, "document": docs_context}
+    #final_result = {"answer": response.choices[0].message.content, "documents": docs_context}
+    final_result= ReturnAnswer(answer=response.choices[0].message.content, documents=docs_context)
     document_store.client.close()
     return final_result
 
 
 @router.post("/show/", tags=["documents"])
-def show_documents(filters: FilterRequest):
+def show_documents(filters: FilterRequest)->list[dict]:
     """
     Retrieve documents contained in your document store.
     You can filter the documents to retrieve by metadata (like the document's name),
@@ -219,7 +228,7 @@ def show_documents(filters: FilterRequest):
 
 
 @router.post("/name_list/", tags=["documents"])
-def list_documents_name(filters: FilterRequest):
+def list_documents_name(filters: FilterRequest)-> list[str]:
     """
        Retrieve the filename of all documents loaded.
        You can filter the documents to retrieve by metadata (like the document's name),
@@ -252,7 +261,7 @@ def list_documents_name(filters: FilterRequest):
 
 
 @router.post("/delete/", tags=["documents"])
-def delete_documents(filters: FilterRequest):
+def delete_documents(filters: FilterRequest) -> bool:
     """
     Delete documents contained in your document store.
     You can filter the documents to delete by metadata (like the document's name),

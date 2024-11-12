@@ -19,7 +19,7 @@ tags_metadata = [
     },
     {
         "name": "search",
-        "description": "Get answers about documents",
+        "description": "Get answers into documents",
         #"externalDocs": {
         #    "description": "Made with FastApi",
         #    "url": "https://fastapi.tiangolo.com/",
@@ -31,7 +31,7 @@ tags_metadata = [
     },
     {
         "name": "agents",
-        "description": "Helpful tasks",
+        "description": "Helpful agents",
     },
 ]
 

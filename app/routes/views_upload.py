@@ -5,7 +5,6 @@ import json
 from dataclasses import dataclass
 from typing import Optional, Dict, Annotated, List
 
-
 from fastapi import APIRouter, Body, BackgroundTasks, UploadFile, File
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -25,8 +24,6 @@ class InputParams(BaseModel):
             return cls(**json.loads(value))
         return value
 
-# class uploadURL(InputParams):
-#     urls:List[str] = Field(title="URI")
 
 class PlainSRTParams(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -45,7 +42,7 @@ router = APIRouter()
 @router.post("/upload/plainSRT/", tags=["documents"])
 def upload_plain_srt(input_values:PlainSRTParams, background_tasks: BackgroundTasks) -> ReturnUpload:
     """
-    Accepts .srt files in plain text for processing.
+    Process .srt files in plain text.
     File name required.
     Metadata example for each file added: `{"user": ["some", "more"], "category": ["only_one"]}`    OR    empty
     """
