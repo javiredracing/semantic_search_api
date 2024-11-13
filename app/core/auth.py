@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+#from dataclasses import dataclass
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import Optional, List
-
+from typing import Optional
+import logging
 from fastapi import APIRouter, HTTPException
 from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
 from jose import jwt, JWTError
@@ -55,7 +55,8 @@ def authenticate_user(
             result = True
 
     except Exception as e:
-        print(str(e).replace(LDAP_dc, 'server'))
+        logging.error(str(e).replace(LDAP_dc, 'server'))
+        #print(str(e).replace(LDAP_dc, 'server'))
     finally:
         if conn.bound: conn.unbind()
 
@@ -142,7 +143,7 @@ async def list_projects(username:str, password:SecretStr,) -> list[ProjectInfo]:
         return result
 
     except Exception as e:
-        print(e)
+        logging.error(e)
         raise HTTPException(
             status_code=HTTPStatus.FAILED_DEPENDENCY,
             detail="Error in database",
@@ -178,6 +179,7 @@ async def login_for_access_token(
             document_store.client.close()
     except Exception as e:
         #print(e)
+        logging.error(e)
         raise HTTPException(
             status_code=HTTPStatus.FAILED_DEPENDENCY,
             detail="Error in database",

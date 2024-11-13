@@ -1,6 +1,6 @@
 # https://caddyserver.com/docs/caddyfile/concepts
 
 :{$PORT} {
-	reverse_proxy /* fnano:5001
+	reverse_proxy /* semantic_search_api:5001
 	encode zstd gzip
 }

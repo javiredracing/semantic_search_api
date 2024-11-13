@@ -39,7 +39,7 @@ def searchInDocstore(params, document_store:ElasticsearchDocumentStore):
     #print_documents(prediction, max_text_len=query.max_text_len, print_name=True, print_meta=True)
     return prediction
 
-def getContext(docs, context_size:int, document_store:ElasticsearchDocumentStore, include_paragraphs:bool = False) -> []:
+def getContext(docs, context_size:int, document_store:ElasticsearchDocumentStore, include_paragraphs:bool = False) -> list:
     if context_size > 0:
         for doc in docs:
             currentParagraph = doc["paragraph"]

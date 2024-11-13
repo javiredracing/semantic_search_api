@@ -21,9 +21,7 @@ API_ACCESS_TOKEN_EXPIRE_MINUTES = config(
 
 DB_HOST = config("DATABASE_SERVER", str)
 EMBEDDINGS_SERVER = config("EMBEDDINGS_SERVER",str)
-OLLAMA_SERVER = config("OLLAMA_SERVER", str)
-AUDIO_TRANSCRIBE_SERVER = config("AUDIO_TRANSCRIBE_SERVER",str)
-AUDIO_PATH = config("AUDIO_PATH",str)
+LLM_SERVER = config("LLM_SERVER", str)
 
 INDEX_SETTINGS = {'mappings':
                       {'_source': {'enabled': True},

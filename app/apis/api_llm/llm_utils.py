@@ -30,7 +30,7 @@ Resumen:
 TEMPLATE_TRANSLATE = """
 La siguiente lista contiene textos:
 
-{{srt_file}}
+{{documents}}
 
 Responde con una lista con cada texto traducido al idioma {{lang}}, en el mismo orden y con igual formato que la lista original. No te inventes nada.
 

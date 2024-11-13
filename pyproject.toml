@@ -4,17 +4,16 @@
 
 [project]
 requires-python = ">=3.8"
-name = "fastapi-nano"
-version = "0.1.0"
-description = "A minimal FastAPI project template."
+name = "Semantic search api"
+version = "0.3.0"
+description = "RAG system"
 readme = "README.md"
-keywords = ["fastapi", "template", "minimal", "docker", "cookiecutter"]
+keywords = ["fastapi", "rag", "docker", "cookiecutter"]
 license = {file = "LICENSE"}
-authors = [{name = "Redowan Delowar", email = "redowan.nafi@gmail.com"}]
+authors = [{name = "Javier Fernández", email = "javiredracing@gmail.com"}]
 dependencies = [
-    "bcrypt",
+    "haystack-ai",
     "fastapi",
-    "passlib",
     "python-multipart",
     "uvicorn",
     "gunicorn",
@@ -33,7 +32,7 @@ dev = [
     "ruff"
 ]
 [project.urls]
-Repository = "https://github.com/rednafi/fastapi-nano.git"
+Repository = "https://github.com/javiredracing/semantic_search_api.git"
 
 #################################################
 # Mypy config

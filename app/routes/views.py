@@ -13,9 +13,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from starlette.responses import RedirectResponse
 
 from app.apis.api_documents.utils import getContext, searchInDocstore
-from app.apis.api_llm.llm_utils import TEMPLATE_ASK_SINGLE_DOC, TEMPLATE_ASK_MULTIPLE_DOCS
+from app.apis.api_llm.llm_utils import TEMPLATE_ASK_MULTIPLE_DOCS#, TEMPLATE_ASK_SINGLE_DOC
 from app.core.auth import decode_access_token
-from app.core.config import EMBEDDINGS_SERVER, DB_HOST, OLLAMA_SERVER, AUDIO_TRANSCRIBE_SERVER, LLM_MODEL
+from app.core.config import EMBEDDINGS_SERVER, DB_HOST, LLM_SERVER, LLM_MODEL
+from app.routes.views_upload import ReturnUpload
 
 router = APIRouter()
 
@@ -59,19 +60,12 @@ def check_status() -> dict:
     except requests.exceptions.RequestException as e:
         result.update({"db_status": "ERROR! " + str(e)})
 
-    # try:
-    #     res = requests.get(OLLAMA_SERVER + "api/ps")
-    #     res.raise_for_status()
-    #     result.update({"llm_status": res.json()})
-    # except requests.exceptions.RequestException as e:
-    #     result.update({"llm_status": "ERROR! " + str(e)})
-    #TODO: VLLM health endpoint
-    # try:
-    #     res = requests.get(AUDIO_TRANSCRIBE_SERVER + "status/")
-    #     res.raise_for_status()
-    #     result.update({"diarization_status": res.json()})
-    # except requests.exceptions.RequestException as e:
-    #     result.update({"diarization_status": "ERROR! " + str(e)})
+    try:
+        res = requests.get(LLM_SERVER + "metrics")
+        res.raise_for_status()
+        result.update({"llm_status": res.text})
+    except requests.exceptions.RequestException as e:
+        result.update({"llm_status": "ERROR! " + str(e)})
 
     return result
 
@@ -99,9 +93,9 @@ def search_document(params: Annotated[SearchQueryParam, Body(embed=True)])->list
     print(project_index)
     document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
     docs = searchInDocstore(params, document_store)
-    print(docs)
     result = []
     if docs is None:
+        document_store.client.close()
         return result
 
     for doc in docs:
@@ -133,15 +127,16 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]) -> Retur
     print(project_index)
     document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
     myDocs = searchInDocstore(params, document_store)
+
     if myDocs is None:
-        #return {"answer": "None", "documents": []}
+        document_store.client.close()
         return ReturnAnswer(answer="None",documents=[])
 
     result = []
     for doc in myDocs:
         result.append(doc.to_dict())
     docs_context = getContext(result, params.context_size, document_store,include_paragraphs=True)
-
+    document_store.client.close()
     #prepara el texto para enviar al llm
     grouped_docs = {}
     #Agrupa documentos por nombre incluyendo el contexto
@@ -173,7 +168,7 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]) -> Retur
     builder = PromptBuilder(template=TEMPLATE_ASK_MULTIPLE_DOCS)
     my_prompt = builder.run(myDocs=grouped_docs, query=params.query.strip())["prompt"].strip()
 
-    client = OpenAI(base_url=OLLAMA_SERVER + 'v1/', api_key='ollama', )
+    client = OpenAI(base_url=LLM_SERVER + 'v1/', api_key='ollama', )
     response = client.chat.completions.create(
         messages=[dict(content=my_prompt, role="user")],
         model=LLM_MODEL,
@@ -188,10 +183,7 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]) -> Retur
             doc["before_context"] = [item[0] for item in doc["before_context"]]
             doc["after_context"] = [item[0] for item in doc["after_context"]]
 
-    #final_result = {"answer": response.choices[0].message.content, "documents": docs_context}
-    final_result= ReturnAnswer(answer=response.choices[0].message.content, documents=docs_context)
-    document_store.client.close()
-    return final_result
+    return ReturnAnswer(answer=response.choices[0].message.content, documents=docs_context)
 
 
 @router.post("/show/", tags=["documents"])
@@ -217,12 +209,13 @@ def show_documents(filters: FilterRequest)->list[dict]:
     print(project_index)
     document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
     prediction = document_store.filter_documents(filters=filters.filters)
+    document_store.client.close()
     result = []
     for doc in prediction:
         doc_dict = doc.to_dict()
         del doc_dict["embedding"]
         result.append(doc_dict)
-    document_store.client.close()
+
     # print_documents(prediction, max_text_len=100, print_name=True, print_meta=True)
     return result
 
@@ -251,17 +244,17 @@ def list_documents_name(filters: FilterRequest)-> list[str]:
     print(project_index)
     document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
     prediction = document_store.filter_documents(filters=filters.filters)
-
+    document_store.client.close()
     res = []
     for doc in prediction:
         res.append(doc.meta["name"])
     res = list(set(res))
-    document_store.client.close()
+
     return res
 
 
 @router.post("/delete/", tags=["documents"])
-def delete_documents(filters: FilterRequest) -> bool:
+def delete_documents(filters: FilterRequest) -> ReturnUpload:
     """
     Delete documents contained in your document store.
     You can filter the documents to delete by metadata (like the document's name),
@@ -283,7 +276,18 @@ def delete_documents(filters: FilterRequest) -> bool:
     print(project_index)
     document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
     prediction = document_store.filter_documents(filters=filters.filters)
-    ids = [doc.id for doc in prediction]
-    document_store.delete_documents(document_ids=ids)
-    document_store.client.close()
-    return True
+
+    ids = []
+    names = []
+    for doc in prediction:
+        ids.append(doc.id)
+        names.append(doc.meta["name"])
+    if len(ids) > 0:
+        document_store.delete_documents(document_ids=ids)
+        res = list(set(names))
+        document_store.client.close()
+        return ReturnUpload(message=f"{str(len(ids))} documents deleted", filenames="".join(res))
+    else:
+        document_store.client.close()
+        return ReturnUpload(message=f"No documents deleted", filenames="")
+

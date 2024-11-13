@@ -8,7 +8,7 @@ from starlette.responses import PlainTextResponse
 
 from app.apis.api_llm.llm_utils import TEMPLATE_SUMMARY, TEMPLATE_TRANSLATE
 from app.core.auth import decode_access_token
-from app.core.config import DB_HOST, OLLAMA_SERVER, LLM_MODEL
+from app.core.config import DB_HOST, LLM_SERVER, LLM_MODEL
 
 router = APIRouter()
 
@@ -26,16 +26,14 @@ def get_summary(file_name: str, token:str) -> str:
 
     builder = PromptBuilder(template=TEMPLATE_SUMMARY)
 
-    #options = {"num_predict": -1, "temperature": 0.1}
-
     if len(prediction) > 0:
         orderedlist = sorted(prediction, key=lambda doc: doc.meta['paragraph'])  # order by paragraph
         custom_docs = ""
         current_speaker = ""
         response = []
-        client = OpenAI(base_url=OLLAMA_SERVER + 'v1/', api_key='ollama', )
+        client = OpenAI(base_url=LLM_SERVER + 'v1/', api_key='ollama', )
         for doc in orderedlist:
-            if doc.meta["file_type"].startswith("audio/"):
+            if doc.meta["file_type"]=="srt":
                 if doc.meta['speaker'] != current_speaker:
                     if current_speaker != "" and not custom_docs.strip().endswith((".", ",", "!", "?", ";")):
                         custom_docs = custom_docs.strip() + "..."
@@ -117,17 +115,17 @@ def translate_document(doc_name: str, lang: str, token:str) -> str:
             current_document += f"{str(i)}- {my_doc_mod.capitalize()}\n\n"
             count += len(doc.content)
             if count >= 1500:  # 6000 chars is aprox 1500 tokens
-                my_prompt = builder.run(lang=lang, srt_file=current_document)["prompt"].strip()
+                my_prompt = builder.run(lang=lang, documents=current_document)["prompt"].strip()
                 prompt_list.append(my_prompt)
                 current_document = ""
                 count = 0
 
         if len(current_document) > 0:
-            my_prompt = builder.run(lang=lang, srt_file=current_document)["prompt"].strip()
+            my_prompt = builder.run(lang=lang, documents=current_document)["prompt"].strip()
             prompt_list.append(my_prompt)
 
         current_document = []
-        client = OpenAI(base_url=OLLAMA_SERVER + 'v1/', api_key='ollama', )
+        client = OpenAI(base_url=LLM_SERVER + 'v1/', api_key='ollama', )
         for prompt in prompt_list:
             completion = client.chat.completions.create(
                 messages=[dict(content=prompt, role="user")],
@@ -145,8 +143,12 @@ def translate_document(doc_name: str, lang: str, token:str) -> str:
                     current_document.append(item[(x + 1):].strip())
 
         #        print("total traslated paragraphs",len(srt_file))
+        #If not a srt file
+        if not doc_name.lower().endswith(".srt"):
+            return "".join(current_document)
+
         plain_res = ""
-        # TODO if doc.meta["file_type"]!="srt", current_document to plain respose
+
         for i, doc in enumerate(orderedlist):
             if doc.meta["file_type"]=="srt":
                 plain_res += f"{str(i + 1)}\n"
@@ -156,10 +158,9 @@ def translate_document(doc_name: str, lang: str, token:str) -> str:
                 #plain_res += text1
                 if i < len(current_document):
                     text1 = f"{doc.meta['speaker']}: {current_document[i]}\n\n"
-                else:
+                else:   # if doc.meta["file_type"]!="srt", current_document to plain respose
                     text1 = f"{doc.meta['speaker']}: --\n\n"
                 plain_res += text1
-
         return plain_res
     else:
         raise HTTPException(status_code=404, detail="File not found!")

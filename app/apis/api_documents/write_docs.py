@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import concurrent
 import time
-from datetime import datetime
+import logging
 
+from datetime import datetime
 import requests
 from haystack import Document
 from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
 
 from app.apis.api_documents.ProcessText import ProcessText
-from app.core.config import EMBEDDINGS_SERVER, EMBEDDINGS_MODEL, DB_HOST, AUDIO_TRANSCRIBE_SERVER, AUDIO_PATH
+from app.core.config import EMBEDDINGS_SERVER, EMBEDDINGS_MODEL, DB_HOST
+
 
 
 def document_manager(files, metadata, index:str):
@@ -24,22 +26,10 @@ def document_manager(files, metadata, index:str):
                 executor.submit(processFile, file, nameParsed[1], meta, index)
                 # processFile(file,nameParsed[1], meta)
             else:
-                print("error extension1")
+                logging.warning("Error! no valid extension")
 
     end = time.process_time()
-    print("Processing time:", end - start)
-    #TODO time in logging
-
-
-# def audio_manager(files, metadata, index:str):
-#     if len(files) > 0:
-#         try:
-#             req = requests.post(AUDIO_TRANSCRIBE_SERVER + "transcribe/", json={"audio_path": files})  #transcribe audio files
-#             req.raise_for_status()
-#             #print(req.json())
-#         except requests.exceptions.RequestException as e:
-#             print("Error!", str(e))
-#             #return "Error!"
+    logging.info("Processing time:", end - start)
 
 
 def processFile(file, ext, metadata, index:str):
@@ -99,7 +89,7 @@ def generateSRT_doc(filename:str, srt_text:str, metadata:dict, index:str):
                     currentMetadata.update({"timestamp": dt_string, "page": 1, "name": filename, "file_type": "srt"})
                     docs.append(Document(content=text, meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
         except requests.exceptions.RequestException as e:
-            print("ERROR!")
+            logging.error(e.response.text)
     if len(docs) > 0:
         document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")  # TODO: Replace index
         document_store.write_documents(docs)
@@ -129,8 +119,8 @@ def generate_doc(file, texts, metadata, pages, index:str):
                     docs.append(Document(content=text.replace("\"", "\'"), meta=currentMetadata,
                                          embedding=doc_emb[i]["embedding"]))
         except requests.exceptions.RequestException as e:
-            print("ERROR!")
-            # TODO set logging error
+            logging.error(e.response.text)
+
     if len(docs) > 0:
         document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")  # TODO: Replace index
         document_store.write_documents(docs)
