@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Annotated, Optional, Dict
 
 from fastapi import APIRouter, Body
@@ -31,10 +30,11 @@ class SearchQueryParam(FilterRequest):
     top_k:int = Field(default=5,gt=0, le=50, description="Number of search results")
     context_size:int = Field(default=0,ge=0, le=20, description="Number of paragraphs in context")
 
-@dataclass
 class ReturnAnswer(BaseModel):
     answer:str
     documents:list[dict]
+    def __init__(self, answer: str, documents: list[dict]) -> None:
+        super().__init__(answer=answer, documents=documents)
 
 
 @router.get("/", include_in_schema=False)

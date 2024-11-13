@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-#from dataclasses import dataclass
 from datetime import datetime, timedelta
 from http import HTTPStatus
 from typing import Optional
@@ -16,14 +15,12 @@ from app.core.config import LDAP_dc, LDAP_ou, API_USERNAME, API_PASSWORD, LDAP_s
     INDEX_SETTINGS, ADMIN_USERS
 
 
-#@dataclass()
 class Project(BaseModel):
     project: str
     token: str
     def __init__(self, token: str, project: str) -> None:
         super().__init__(token=token, project=project)
 
-#@dataclass
 class ProjectInfo(BaseModel):
     project: str
     user:str
@@ -56,7 +53,6 @@ def authenticate_user(
 
     except Exception as e:
         logging.error(str(e).replace(LDAP_dc, 'server'))
-        #print(str(e).replace(LDAP_dc, 'server'))
     finally:
         if conn.bound: conn.unbind()
 
