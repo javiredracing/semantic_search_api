@@ -58,12 +58,11 @@ def upload_plain_srt(input_values:PlainSRTParams, background_tasks: BackgroundTa
 def upload_documents(files: Annotated[List[UploadFile], File(description="Document files to upload")], background_tasks: BackgroundTasks,
                      metadata: InputParams = Body(...)) -> ReturnUpload:
     """
-    Accepts documents in **.doc, .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg,.txt and .srt** format. It only can be parsed by paragraphs.
-
-    `TODO: Add support for other parsing options.`
+    Accepts documents in **.doc, .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg, .txt and .srt** format. It only can be parsed by paragraphs.
 
     Metadata example for each file added: `{"name": ["some", "more"], "category": ["only_one"]}`    OR    empty
     """
+    #TODO: Add support for other parsing options.
     index = decode_access_token(metadata.token)
     print(index)
     #

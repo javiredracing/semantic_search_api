@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
 from jose import jwt, JWTError
 from ldap3 import Server, Connection
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, SecretStr, Field
 
 from app.core import config
 from app.core.config import LDAP_dc, LDAP_ou, API_USERNAME, API_PASSWORD, LDAP_server, DB_HOST, PROJECTS_INDEX, \
@@ -23,12 +23,12 @@ class ProjectInfo(Project):
     description:str
 
 class Login(BaseModel):
-    username:str
-    password:SecretStr
+    username:str= Field(title="Max length 50 chars", max_length=50)
+    password:SecretStr = Field(title="Max length 50 chars", max_length=50)
 
 class ProjectParams(Login):
-    project:str
-    description:str
+    project:str= Field(title="Project name", max_length=20)
+    description:str= Field(title="Project's description", max_length=1000)
 
 router = APIRouter()
 
@@ -106,6 +106,11 @@ def decode_access_token(token: str) -> str:
 
 @router.post("/list/",  tags=["projects"])
 async def list_projects(login:Login) -> list[ProjectInfo]:
+    """
+    List all user's projects. Parameters required:
+    - username: Valid company username
+    - password: username password
+    """
     username = login.username.lower().strip()
     isSuperuser = False
     if authenticate_superuser(username, login.password.get_secret_value()):
@@ -148,6 +153,13 @@ async def list_projects(login:Login) -> list[ProjectInfo]:
 
 @router.post("/create/", response_model=Project, tags=["projects"])
 async def login_for_access_token(params:ProjectParams) -> Project:
+    """
+    Create a new project. Valid parameters:
+    - username: Valid company username
+    - password: username password
+    - project: Project's name
+    - Description
+    """
     username = params.username.lower().strip()
     if not authenticate_user(username, params.password.get_secret_value()):
         raise HTTPException(

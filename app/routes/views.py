@@ -42,6 +42,9 @@ def main():
 
 @router.get("/status/")
 def check_status() -> dict:
+    """
+    Distributed system status and healthy
+    """
     # doc = document_store.describe_documents()
     result = {}
     try:
