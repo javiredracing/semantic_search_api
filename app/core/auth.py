@@ -36,10 +36,7 @@ def authenticate_superuser(username:str,password:str) -> bool:
     return username == API_USERNAME and password == API_PASSWORD
 
 
-def authenticate_user(
-    username: str,
-    password: str,
-) -> bool:
+def authenticate_user(username: str, password: str) -> bool:
     username_mod = f'uid={username},ou={LDAP_ou},dc=iter,dc=es'
     server = Server(LDAP_server, use_ssl=False, get_info='ALL')
     conn = Connection(server, username_mod, password, auto_bind=False, auto_referrals=False, raise_exceptions=False)
@@ -104,6 +101,7 @@ def decode_access_token(token: str) -> str:
 
     return project_index
 
+
 @router.post("/list/",  tags=["projects"])
 async def list_projects(login:Login) -> list[ProjectInfo]:
     """
@@ -112,17 +110,13 @@ async def list_projects(login:Login) -> list[ProjectInfo]:
     - password: username password
     """
     username = login.username.lower().strip()
-    isSuperuser = False
-    if authenticate_superuser(username, login.password.get_secret_value()):
-        isSuperuser = True
-    elif not authenticate_user(
-        username,
-        login.password.get_secret_value(),
-    ):
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail="Incorrect username or password",
-        )
+    isSuperuser = authenticate_superuser(username, login.password.get_secret_value())
+    if not isSuperuser:
+        if not authenticate_user(username, login.password.get_secret_value()):
+            raise HTTPException(
+                status_code=HTTPStatus.UNAUTHORIZED,
+                detail="Incorrect username or password",
+            )
 
     try:
         document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index=PROJECTS_INDEX, custom_mapping=INDEX_SETTINGS)
@@ -137,8 +131,6 @@ async def list_projects(login:Login) -> list[ProjectInfo]:
             project = hit['_source']["project"]
             user_project = hit['_source']["user"]
             my_token= create_access_token(data={"sub": project,"user":user_project})
-            # hit['_source']["token"] = my_token
-            # result.append(hit['_source'])
             info=ProjectInfo(project=project,user=user_project,token=my_token,description= hit['_source']["description"])
             result.append(info)
         document_store.client.close()
@@ -161,11 +153,13 @@ async def login_for_access_token(params:ProjectParams) -> Project:
     - Description
     """
     username = params.username.lower().strip()
-    if not authenticate_user(username, params.password.get_secret_value()):
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail="Incorrect username or password",
-        )
+    isSuperuser = authenticate_superuser(username, params.password.get_secret_value())
+    if not isSuperuser:
+        if not authenticate_user(username, params.password.get_secret_value()):
+            raise HTTPException(
+                status_code=HTTPStatus.UNAUTHORIZED,
+                detail="Incorrect username or password",
+            )
 
     project = params.project.lower().strip().replace(" ", "_")
 

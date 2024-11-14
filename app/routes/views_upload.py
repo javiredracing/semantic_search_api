@@ -73,3 +73,5 @@ def upload_documents(files: Annotated[List[UploadFile], File(description="Docume
 
     background_tasks.add_task(document_manager, copy.deepcopy(files), metadata.metadata, index)
     return ReturnUpload(message="Processing documents", filenames="".join([file.filename for file in files]))
+
+#TODO upload from url
