@@ -33,8 +33,6 @@ class SearchQueryParam(FilterRequest):
 class ReturnAnswer(BaseModel):
     answer:str
     documents:list[dict]
-    def __init__(self, answer: str, documents: list[dict]) -> None:
-        super().__init__(answer=answer, documents=documents)
 
 
 @router.get("/", include_in_schema=False)

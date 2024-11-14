@@ -18,16 +18,12 @@ from app.core.config import LDAP_dc, LDAP_ou, API_USERNAME, API_PASSWORD, LDAP_s
 class Project(BaseModel):
     project: str
     token: str
-    def __init__(self, token: str, project: str) -> None:
-        super().__init__(token=token, project=project)
 
 class ProjectInfo(BaseModel):
     project: str
     user:str
     description:str
     token: str
-    def __init__(self, user: str, token:str,project:str,description: Optional[str]="",) -> None:
-        super().__init__(token=token,project=project,user=user,description=description )
 
 router = APIRouter()
 
@@ -185,4 +181,4 @@ async def login_for_access_token(
         data={"sub": project, "user":username}
     )
 
-    return Project(token=access_token, project=project)
+    return Project(project=project, token=access_token)

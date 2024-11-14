@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import copy
 import json
-from dataclasses import dataclass
 from typing import Optional, Dict, Annotated, List
 
 from fastapi import APIRouter, Body, BackgroundTasks, UploadFile, File
@@ -32,7 +31,6 @@ class PlainSRTParams(BaseModel):
     metadata:Optional[Dict] = None
     token:str = Field(title="Access token", max_length=175)
 
-@dataclass
 class ReturnUpload(BaseModel):
     message:str
     filenames:str
@@ -43,8 +41,10 @@ router = APIRouter()
 def upload_plain_srt(input_values:PlainSRTParams, background_tasks: BackgroundTasks) -> ReturnUpload:
     """
     Process .srt files in plain text.
-    File name required.
-    Metadata example for each file added: `{"user": ["some", "more"], "category": ["only_one"]}`    OR    empty
+    - text: Plain srt file
+    - File name required.
+    - Metadata example for each file added: `{"user": ["some", "more"], "category": ["only_one"]}`    OR    empty
+    - Token access required
     """
 
     index = decode_access_token(input_values.token)
@@ -55,7 +55,7 @@ def upload_plain_srt(input_values:PlainSRTParams, background_tasks: BackgroundTa
 
 
 @router.post("/upload/", tags=["documents"])
-def upload_documents(files: Annotated[List[UploadFile], File(description="files")], background_tasks: BackgroundTasks,
+def upload_documents(files: Annotated[List[UploadFile], File(description="Document files to upload")], background_tasks: BackgroundTasks,
                      metadata: InputParams = Body(...)) -> ReturnUpload:
     """
     Accepts documents in **.doc, .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg,.txt and .srt** format. It only can be parsed by paragraphs.
