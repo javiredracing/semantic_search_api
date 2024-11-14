@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import Optional
 import logging
 from fastapi import APIRouter, HTTPException
 from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
@@ -19,16 +18,22 @@ class Project(BaseModel):
     project: str
     token: str
 
-class ProjectInfo(BaseModel):
-    project: str
+class ProjectInfo(Project):
     user:str
     description:str
-    token: str
+
+class Login(BaseModel):
+    username:str
+    password:SecretStr
+
+class ProjectParams(Login):
+    project:str
+    description:str
 
 router = APIRouter()
 
 def authenticate_superuser(username:str,password:str) -> bool:
-    return username.lower().strip() == API_USERNAME and password == API_PASSWORD
+    return username == API_USERNAME and password == API_PASSWORD
 
 
 def authenticate_user(
@@ -99,15 +104,15 @@ def decode_access_token(token: str) -> str:
 
     return project_index
 
-@router.post("/list",  tags=["projects"])
-async def list_projects(username:str, password:SecretStr,) -> list[ProjectInfo]:
-    username = username.lower().strip()
+@router.post("/list/",  tags=["projects"])
+async def list_projects(login:Login) -> list[ProjectInfo]:
+    username = login.username.lower().strip()
     isSuperuser = False
-    if authenticate_superuser(username, password.get_secret_value()):
+    if authenticate_superuser(username, login.password.get_secret_value()):
         isSuperuser = True
     elif not authenticate_user(
         username,
-        password.get_secret_value(),
+        login.password.get_secret_value(),
     ):
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
@@ -141,18 +146,16 @@ async def list_projects(username:str, password:SecretStr,) -> list[ProjectInfo]:
             detail="Error in database",
         )
 
-@router.post("/create", response_model=Project, tags=["projects"])
-async def login_for_access_token(
-    username:str, password:SecretStr, project:str, description:str=""
-) -> Project:
-    username = username.lower().strip()
-    if not authenticate_user(username, password.get_secret_value()):
+@router.post("/create/", response_model=Project, tags=["projects"])
+async def login_for_access_token(params:ProjectParams) -> Project:
+    username = params.username.lower().strip()
+    if not authenticate_user(username, params.password.get_secret_value()):
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="Incorrect username or password",
         )
 
-    project = project.lower().strip().replace(" ", "_")
+    project = params.project.lower().strip().replace(" ", "_")
 
     try:
         document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index=PROJECTS_INDEX, custom_mapping=INDEX_SETTINGS)
@@ -165,7 +168,7 @@ async def login_for_access_token(
             )
         else:
             document_store.client.index(index=PROJECTS_INDEX,
-                                        body={"project": project, "description": description, "user": username})
+                                        body={"project": project, "description": params.description, "user": username})
             document_store.client.close()
             document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index=project)
             document_store.client.close()
