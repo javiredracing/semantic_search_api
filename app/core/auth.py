@@ -126,14 +126,13 @@ async def list_projects(login:Login) -> list[ProjectInfo]:
 
         response = document_store.client.search(index=PROJECTS_INDEX, body=query)
         result = []
-
+        document_store.client.close()
         for hit in response['hits']['hits']:
             project = hit['_source']["project"]
             user_project = hit['_source']["user"]
             my_token= create_access_token(data={"sub": project,"user":user_project})
             info=ProjectInfo(project=project,user=user_project,token=my_token,description= hit['_source']["description"])
             result.append(info)
-        document_store.client.close()
         return result
 
     except Exception as e:
