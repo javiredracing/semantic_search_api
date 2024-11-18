@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a2cb3f51-c35e-4e5d-befd-71be4c797ce5" name="Changes" comment="read plain text in different function">
+    <list default="true" id="a2cb3f51-c35e-4e5d-befd-71be4c797ce5" name="Changes" comment="docx in info">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apis/api_documents/write_docs.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/apis/api_documents/write_docs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/views_upload.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/views_upload.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/routes/views_agents.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/views_agents.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -283,7 +282,23 @@
       <option name="project" value="LOCAL" />
       <updated>1731939363230</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="Upload file refactorized&#10;Upload file from url method added">
+      <option name="closed" value="true" />
+      <created>1731939811038</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1731939811038</updated>
+    </task>
+    <task id="LOCAL-00026" summary="docx in info">
+      <option name="closed" value="true" />
+      <created>1731939949376</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1731939949376</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -331,6 +346,8 @@
     <MESSAGE value="Code revised" />
     <MESSAGE value="code revised" />
     <MESSAGE value="read plain text in different function" />
-    <option name="LAST_COMMIT_MESSAGE" value="read plain text in different function" />
+    <MESSAGE value="Upload file refactorized&#10;Upload file from url method added" />
+    <MESSAGE value="docx in info" />
+    <option name="LAST_COMMIT_MESSAGE" value="docx in info" />
   </component>
 </project>
