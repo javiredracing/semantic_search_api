@@ -78,8 +78,7 @@ class ProcessText:
         # bytesFile = file.file.read()
         if fileType in ProcessText.VALID_FORMATS_FITZ:
             plain_text = ProcessText.readBinaryFile(bytesFile, fileType)
-            txt_formatted = ProcessText.remove_header_footer(plain_text)
-            splitted_text, text_pages = ProcessText.chunk_text(txt_formatted)  # fix text
+            splitted_text, text_pages = ProcessText.read_plain_text(plain_text)  # fix text
 
         elif fileType in ProcessText.VALID_FORMATS:
             plain_text = bytesFile.decode("utf-8").strip()
@@ -156,6 +155,10 @@ class ProcessText:
     # df[i][j] = cell.text
     # tables.append(pd.DataFrame(df))
     # return tables
+    @staticmethod
+    def read_plain_text(plain_text:str):
+        txt_formatted = ProcessText.remove_header_footer(plain_text)
+        return ProcessText.chunk_text(txt_formatted)
 
     @staticmethod
     def chunk_text(input):
