@@ -81,7 +81,7 @@ def get_summary(file_name: str, token:str) -> str:
 
         return ''.join(response)
     else:
-        raise HTTPException(status_code=404, detail="File not found!")
+        raise HTTPException(status_code=404, detail="Document not found!")
 
 
 @router.get("/translate/{doc_name}/{lang}/{token}/", tags=["agents"], response_class=PlainTextResponse)
@@ -163,4 +163,4 @@ def translate_document(doc_name: str, lang: str, token:str) -> str:
                 plain_res += text1
         return plain_res
     else:
-        raise HTTPException(status_code=404, detail="File not found!")
+        raise HTTPException(status_code=404, detail="Document not found!")
