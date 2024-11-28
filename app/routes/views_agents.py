@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, HTTPException
 from haystack.components.builders import PromptBuilder
 from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 from starlette.responses import PlainTextResponse
 
 from app.apis.api_llm.llm_utils import TEMPLATE_SUMMARY, TEMPLATE_TRANSLATE
@@ -53,6 +55,25 @@ def get_summary(file_name: str, token:str) -> str:
                 # print(my_prompt)
                 custom_docs = ""
                 #LLM CALL
+                try:
+                    completion = client.chat.completions.create(
+                        messages=[dict(content=my_prompt, role="user")],
+                        model=LLM_MODEL,
+                        temperature=0.1,
+                        top_p=0.5,
+                        stream=False
+                    )
+                    response.append("\n\n" + completion.choices[0].message.content)
+                except OpenAIError as e:
+                    logging.error(f"LLM Error: {e}")
+                    raise HTTPException(status_code=500, detail="Error generating response")
+
+        if not custom_docs.strip().endswith((".", ",", "!", "?", ";")):
+            custom_docs = custom_docs.strip() + "."
+        if len(custom_docs) > 0:
+            my_prompt = builder.run(myDocs=custom_docs)["prompt"].strip()
+            custom_docs = ""
+            try:
                 completion = client.chat.completions.create(
                     messages=[dict(content=my_prompt, role="user")],
                     model=LLM_MODEL,
@@ -60,24 +81,10 @@ def get_summary(file_name: str, token:str) -> str:
                     top_p=0.5,
                     stream=False
                 )
-
                 response.append("\n\n" + completion.choices[0].message.content)
-
-        if not custom_docs.strip().endswith((".", ",", "!", "?", ";")):
-            custom_docs = custom_docs.strip() + "."
-        if len(custom_docs) > 0:
-            my_prompt = builder.run(myDocs=custom_docs)["prompt"].strip()
-            custom_docs = ""
-            completion = client.chat.completions.create(
-                messages=[dict(content=my_prompt, role="user")],
-                model=LLM_MODEL,
-                temperature=0.1,
-                top_p=0.5,
-                stream=False
-            )
-            #if agent_response is None:
-            #    return ""
-            response.append("\n\n" + completion.choices[0].message.content)
+            except OpenAIError as e:
+                logging.error(f"LLM Error: {e}")
+                raise HTTPException(status_code=500, detail="Error generating response")
 
         return ''.join(response)
     else:
@@ -127,14 +134,18 @@ def translate_document(doc_name: str, lang: str, token:str) -> str:
         current_document = []
         client = OpenAI(base_url=LLM_SERVER + 'v1/', api_key='ollama', )
         for prompt in prompt_list:
-            completion = client.chat.completions.create(
-                messages=[dict(content=prompt, role="user")],
-                model=LLM_MODEL,
-                temperature=0.1,
-                top_p=0.5,
-                stream=False
-            )
-            data = completion.choices[0].message.content.split("\n")
+            try:
+                completion = client.chat.completions.create(
+                    messages=[dict(content=prompt, role="user")],
+                    model=LLM_MODEL,
+                    temperature=0.1,
+                    top_p=0.5,
+                    stream=False
+                )
+                data = completion.choices[0].message.content.split("\n")
+            except OpenAIError as e:
+                logging.error(f"LLM Error: {e}")
+                raise HTTPException(status_code=500, detail="Error generating response!")
             # print(data)
             final_list = [i for i in data if i]
             for item in final_list[1:]:
@@ -142,7 +153,7 @@ def translate_document(doc_name: str, lang: str, token:str) -> str:
                 if x >= 1 and (x + 1) < len(item):
                     current_document.append(item[(x + 1):].strip())
 
-        #        print("total traslated paragraphs",len(srt_file))
+        #        print("total translated paragraphs",len(srt_file))
         #If not a srt file
         if not doc_name.lower().endswith(".srt"):
             return "".join(current_document)
@@ -158,7 +169,7 @@ def translate_document(doc_name: str, lang: str, token:str) -> str:
                 #plain_res += text1
                 if i < len(current_document):
                     text1 = f"{doc.meta['speaker']}: {current_document[i]}\n\n"
-                else:   # if doc.meta["file_type"]!="srt", current_document to plain respose
+                else:   # if doc.meta["file_type"]!="srt", current_document to plain response
                     text1 = f"{doc.meta['speaker']}: --\n\n"
                 plain_res += text1
         return plain_res

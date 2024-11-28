@@ -17,20 +17,20 @@ from app.core.config import EMBEDDINGS_SERVER, EMBEDDINGS_MODEL, DB_HOST
 def download_process_file(url_file:FileUrl, metadata:dict, index:str):
     try:
         response = requests.get(url_file)
-        if response.status_code == 200:
-            filename = response.headers.get("Content-Disposition")
-            if filename:
-                filename = filename.split("=")[-1].strip().strip('"')
-            else:
-                filename = os.path.basename(url_file.path)
-            content_type = response.headers.get("Content-Type")
-            if len(filename.split(".")) > 0:
-                if not content_type:
-                    content_type = filename.split(".")[1]
-                processFile(file=response.content,filename=filename, content_type=content_type, metadata=metadata, index=index)
-    except requests.RequestException:
+        response.raise_for_status()
+        filename = response.headers.get("Content-Disposition")
+        if filename:
+            filename = filename.split("=")[-1].strip().strip('"')
+        else:
+            filename = os.path.basename(url_file.path)
+        content_type = response.headers.get("Content-Type")
+        if len(filename.split(".")) > 0:
+            if not content_type:
+                content_type = filename.split(".")[1]
+            processFile(file=response.content,filename=filename, content_type=content_type, metadata=metadata, index=index)
+    except requests.exceptions.RequestException as e:
+        logging.warning(e.response.text)
         pass
-    return None
 
 def processFile(file:bytes, filename:str, content_type:str, metadata:dict, index:str):
     nameParsed = filename.split(".")
@@ -99,15 +99,15 @@ def generateSRT_doc(filename:str, srt_text:str, metadata:dict) -> list:
         try:
             req = requests.post(EMBEDDINGS_SERVER + "embeddings",
                                 json={"input": current_texts, "model": EMBEDDINGS_MODEL})  # encode texts infinity api
-            if req.status_code == 200:
-                doc_emb = req.json()["data"]
-                now = datetime.now()
-                dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-                for i, text in enumerate(current_texts):
-                    currentMetadata = srt_json[i]["metadata"]
-                    currentMetadata.update(metadata)
-                    currentMetadata.update({"timestamp": dt_string, "page": 1, "name": filename, "file_type": "srt"})
-                    docs.append(Document(content=text, meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
+            req.raise_for_status()
+            doc_emb = req.json()["data"]
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+            for i, text in enumerate(current_texts):
+                currentMetadata = srt_json[i]["metadata"]
+                currentMetadata.update(metadata)
+                currentMetadata.update({"timestamp": dt_string, "page": 1, "name": filename, "file_type": "srt"})
+                docs.append(Document(content=text, meta=currentMetadata, embedding=doc_emb[i]["embedding"]))
         except requests.exceptions.RequestException as e:
             logging.error(e.response.text)
 
@@ -117,24 +117,24 @@ def generate_doc(filename:str, content_type:str, texts:list, metadata:dict, page
     docs = []
     if len(texts) > 0:
         try:
-            req = requests.post(EMBEDDINGS_SERVER + "embeddings/",
+            req = requests.post(EMBEDDINGS_SERVER + "embeddings",
                                 json={"input": texts, "model": EMBEDDINGS_MODEL})  # encode texts infinity api
-            if req.status_code == 200:
-                doc_emb = req.json()["data"]
-                now = datetime.now()
-                dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-                for i, text in enumerate(texts):
-                    currentMetadata = {"name": filename, "paragraph": i, "timestamp": dt_string,
-                                       "file_type": content_type}
-                    if metadata:
-                        currentMetadata.update(metadata)
-                    if len(pages) == len(texts):
-                        currentMetadata.update({"page": pages[i]})
-                    elif len(pages) == 1:
-                        currentMetadata.update({"page": pages[0]})
+            req.raise_for_status()
+            doc_emb = req.json()["data"]
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+            for i, text in enumerate(texts):
+                currentMetadata = {"name": filename, "paragraph": i, "timestamp": dt_string,
+                                   "file_type": content_type}
+                if metadata:
+                    currentMetadata.update(metadata)
+                if len(pages) == len(texts):
+                    currentMetadata.update({"page": pages[i]})
+                elif len(pages) == 1:
+                    currentMetadata.update({"page": pages[0]})
 
-                    docs.append(Document(content=text.replace("\"", "\'"), meta=currentMetadata,
-                                         embedding=doc_emb[i]["embedding"]))
+                docs.append(Document(content=text.replace("\"", "\'"), meta=currentMetadata,
+                                     embedding=doc_emb[i]["embedding"]))
         except requests.exceptions.RequestException as e:
             logging.error(e.response.text)
 
