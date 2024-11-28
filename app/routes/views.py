@@ -1,17 +1,18 @@
 from __future__ import annotations
 
+import logging
 from typing import Annotated, Optional, Dict
 
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, HTTPException
 import requests
 from haystack.components.builders import PromptBuilder
 from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.responses import RedirectResponse
 
-from app.apis.api_documents.utils import getContext, searchInDocstore
+from app.apis.api_documents.utils import set_context, searchInDocstore
 from app.apis.api_llm.llm_utils import TEMPLATE_ASK_MULTIPLE_DOCS#, TEMPLATE_ASK_SINGLE_DOC
 from app.core.auth import decode_access_token
 from app.core.config import EMBEDDINGS_SERVER, DB_HOST, LLM_SERVER, LLM_MODEL
@@ -94,16 +95,12 @@ def search_document(params: Annotated[SearchQueryParam, Body(embed=True)])->list
     print(project_index)
     document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
     docs = searchInDocstore(params, document_store)
-    result = []
     if docs is None:
         document_store.client.close()
-        return result
-
-    for doc in docs:
-        result.append(doc.to_dict())
-    docs_context = getContext(result, params.context_size, document_store)
+        return []
+    docs = set_context(docs, params.context_size, document_store)
     document_store.client.close()
-    return docs_context
+    return docs
 
 
 @router.post("/ask/", tags=["search"])
@@ -127,21 +124,18 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]) -> Retur
     project_index = decode_access_token(params.token)
     print(project_index)
     document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
-    myDocs = searchInDocstore(params, document_store)
+    list_docs = searchInDocstore(params, document_store)
 
-    if myDocs is None:
+    if list_docs is None:
         document_store.client.close()
         return ReturnAnswer(answer="None",documents=[])
 
-    result = []
-    for doc in myDocs:
-        result.append(doc.to_dict())
-    docs_context = getContext(result, params.context_size, document_store,include_paragraphs=True)
+    list_docs = set_context(list_docs, params.context_size, document_store, include_paragraphs=True)
     document_store.client.close()
     #prepara el texto para enviar al llm
     grouped_docs = {}
     #Agrupa documentos por nombre incluyendo el contexto
-    for doc in docs_context:
+    for doc in list_docs:
         name = doc["name"]
         # Si el nombre no está en el diccionario, lo agrega con un contenido vacío
         if name not in grouped_docs:
@@ -170,21 +164,24 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]) -> Retur
     my_prompt = builder.run(myDocs=grouped_docs, query=params.query.strip())["prompt"].strip()
 
     client = OpenAI(base_url=LLM_SERVER + 'v1/', api_key='ollama', )
-    response = client.chat.completions.create(
-        messages=[dict(content=my_prompt, role="user")],
-        model=LLM_MODEL,
-        temperature=0.1,
-        top_p=0.5,
-        stream=False
-    )
+    try:
+        response = client.chat.completions.create(
+            messages=[dict(content=my_prompt, role="user")],
+            model=LLM_MODEL,
+            temperature=0.1,
+            top_p=0.5,
+            stream=False
+        )
+        # remove t-uplas from contexts arrays
+        for doc in list_docs:
+            if "before_context" in doc and "after_context" in doc:
+                doc["before_context"] = [item[0] for item in doc["before_context"]]
+                doc["after_context"] = [item[0] for item in doc["after_context"]]
 
-    #remove t-uplas from contexts arrays
-    for doc in docs_context:
-        if "before_context" in doc and "after_context" in doc:
-            doc["before_context"] = [item[0] for item in doc["before_context"]]
-            doc["after_context"] = [item[0] for item in doc["after_context"]]
-
-    return ReturnAnswer(answer=response.choices[0].message.content, documents=docs_context)
+        return ReturnAnswer(answer=response.choices[0].message.content, documents=list_docs)
+    except OpenAIError as e:
+        logging.error(f"LLM Error: {e}")
+        return ReturnAnswer(answer="Error generating answer!", documents=list_docs)
 
 
 @router.post("/show/", tags=["documents"])
@@ -291,4 +288,3 @@ def delete_documents(filters: FilterRequest) -> ReturnUpload:
     else:
         document_store.client.close()
         return ReturnUpload(message=f"No documents deleted", filenames="")
-

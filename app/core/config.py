@@ -41,4 +41,5 @@ LDAP_server = config("LDAP_server",str)
 ADMIN_USERS = config("ADMIN_USERS", cast=CommaSeparatedStrings)
 
 LLM_MODEL = config("LLM_MODEL",str)
-EMBEDDINGS_MODEL = config("TRANSFORMER",str)
+EMBEDDINGS_MODEL = config("EMBEDDING_MODEL",str)
+RERANKER_MODEL = config("RERANKER_MODEL",str)
