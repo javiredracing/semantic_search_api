@@ -40,20 +40,6 @@ class ReturnUpload(BaseModel):
 
 router = APIRouter()
 
-@router.post("/upload/plainText/", tags=["documents"])
-def upload_plain_text(input_values:PlainSRTParams, background_tasks: BackgroundTasks) -> ReturnUpload:
-    """
-    Process .srt and .txt files in plain text.
-    - text: Plain text file
-    - File name required.
-    - Metadata example for each file added: `{"user": ["some", "more"], "category": ["only_one"]}`    OR    empty
-    - Access token required
-    """
-    index = decode_access_token(input_values.token)
-    print(index)
-    background_tasks.add_task(processPlainText, input_values.filename, input_values.text, input_values.metadata, index)
-    return ReturnUpload(message="Plain text uploaded correctly, processing...", filenames=input_values.filename)
-
 
 @router.post("/upload/", tags=["documents"])
 def upload_documents(files: Annotated[List[UploadFile], File(description="Document files to upload")], background_tasks: BackgroundTasks,
@@ -77,7 +63,22 @@ def upload_documents(files: Annotated[List[UploadFile], File(description="Docume
     return ReturnUpload(message=f"Processing {str(len(filenames))} documents", filenames="".join(filenames))
 
 
-@router.post("/upload_url/", tags=["documents"])
+@router.post("/upload/plainText/", tags=["documents"])
+def upload_plain_text(input_values:PlainSRTParams, background_tasks: BackgroundTasks) -> ReturnUpload:
+    """
+    Process .srt and .txt files in plain text.
+    - text: Plain text file
+    - File name required.
+    - Metadata example for each file added: `{"user": ["some", "more"], "category": ["only_one"]}`    OR    empty
+    - Access token required
+    """
+    index = decode_access_token(input_values.token)
+    print(index)
+    background_tasks.add_task(processPlainText, input_values.filename, input_values.text, input_values.metadata, index)
+    return ReturnUpload(message="Plain text uploaded correctly, processing...", filenames=input_values.filename)
+
+
+@router.post("/upload/url/", tags=["documents"])
 def upload_documents_from_url(params: InputParamsURL, background_tasks: BackgroundTasks) -> ReturnUpload:
     """
     Accepts accessible URL files in **.docx, .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg, .txt and .srt** format. It only can be parsed by paragraphs.

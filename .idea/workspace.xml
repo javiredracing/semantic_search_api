@@ -4,14 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a2cb3f51-c35e-4e5d-befd-71be4c797ce5" name="Changes" comment="code revised">
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+    <list default="true" id="a2cb3f51-c35e-4e5d-befd-71be4c797ce5" name="Changes" comment="Error controls added&#10;Code revised">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apis/api_documents/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/apis/api_documents/utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apis/api_documents/write_docs.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/apis/api_documents/write_docs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/core/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/views_agents.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/views_agents.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/routes/views_upload.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/views_upload.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -323,7 +319,23 @@
       <option name="project" value="LOCAL" />
       <updated>1731940498344</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="Reranking functionality">
+      <option name="closed" value="true" />
+      <created>1732806356290</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1732806356290</updated>
+    </task>
+    <task id="LOCAL-00030" summary="Error controls added&#10;Code revised">
+      <option name="closed" value="true" />
+      <created>1732806383251</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1732806383251</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -374,6 +386,8 @@
     <MESSAGE value="docx in info" />
     <MESSAGE value="info revision" />
     <MESSAGE value="code revised" />
-    <option name="LAST_COMMIT_MESSAGE" value="code revised" />
+    <MESSAGE value="Reranking functionality" />
+    <MESSAGE value="Error controls added&#10;Code revised" />
+    <option name="LAST_COMMIT_MESSAGE" value="Error controls added&#10;Code revised" />
   </component>
 </project>

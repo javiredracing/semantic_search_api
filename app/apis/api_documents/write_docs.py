@@ -139,4 +139,3 @@ def generate_doc(filename:str, content_type:str, texts:list, metadata:dict, page
             logging.error(e.response.text)
 
     return docs
-
