@@ -37,12 +37,12 @@ class ReturnAnswer(BaseModel):
 
 
 @router.get("/", include_in_schema=False)
-def main():
+async def main():
     return RedirectResponse(url='/docs')
 
 
 @router.get("/status/")
-def check_status() -> dict:
+async def check_status() -> dict:
     """
     Distributed system status and healthy
     """
@@ -73,7 +73,7 @@ def check_status() -> dict:
 
 
 @router.post("/search/", tags=["search"])
-def search_document(params: Annotated[SearchQueryParam, Body(embed=True)])->list[dict]:
+async def search_document(params: Annotated[SearchQueryParam, Body(embed=True)])->list[dict]:
     """
     Receives the question as a string and allows the requester to set
     additional parameters that will be passed on to the system to get a set of most relevant document pieces.
@@ -104,7 +104,7 @@ def search_document(params: Annotated[SearchQueryParam, Body(embed=True)])->list
 
 
 @router.post("/ask/", tags=["search"])
-def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]) -> ReturnAnswer:
+async def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]) -> ReturnAnswer:
     """
     Receive the question as a string and allows the requester to set
     additional parameters that will be passed on to the system to get a set of most relevant answers.
@@ -185,7 +185,7 @@ def ask_document(params: Annotated[SearchQueryParam, Body(embed=True)]) -> Retur
 
 
 @router.post("/show/", tags=["documents"])
-def show_documents(filters: FilterRequest)->list[dict]:
+async def show_documents(filters: FilterRequest)->list[dict]:
     """
     Retrieve documents contained in your document store.
     You can filter the documents to retrieve by metadata (like the document's name),
@@ -203,6 +203,7 @@ def show_documents(filters: FilterRequest)->list[dict]:
     			   }
   		      }`
     """
+    # inicio = time.time()
     project_index = decode_access_token(filters.token)
     print(project_index)
     document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index="semantic_search")
@@ -213,13 +214,15 @@ def show_documents(filters: FilterRequest)->list[dict]:
         doc_dict = doc.to_dict()
         del doc_dict["embedding"]
         result.append(doc_dict)
-
+    # fin = time.time()
+    # tiempo_ejecucion = fin - inicio
+    # print(f"process time sin async: {tiempo_ejecucion} seconds")
     # print_documents(prediction, max_text_len=100, print_name=True, print_meta=True)
     return result
 
 
 @router.post("/name_list/", tags=["documents"])
-def list_documents_name(filters: FilterRequest)-> list[str]:
+async def list_documents_name(filters: FilterRequest)-> list[str]:
     """
        Retrieve the filename of all documents loaded.
        You can filter the documents to retrieve by metadata (like the document's name),
@@ -252,7 +255,7 @@ def list_documents_name(filters: FilterRequest)-> list[str]:
 
 
 @router.post("/delete/", tags=["documents"])
-def delete_documents(filters: FilterRequest) -> ReturnUpload:
+async def delete_documents(filters: FilterRequest) -> ReturnUpload:
     """
     Delete documents contained in your document store.
     You can filter the documents to delete by metadata (like the document's name),

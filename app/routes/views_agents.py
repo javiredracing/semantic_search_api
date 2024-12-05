@@ -15,7 +15,7 @@ from app.core.config import DB_HOST, LLM_SERVER, LLM_MODEL
 router = APIRouter()
 
 @router.get("/summarize/{file_name}/{token}/", tags=["agents"], response_class=PlainTextResponse)
-def get_summary(file_name: str, token:str) -> str:
+async def get_summary(file_name: str, token:str) -> str:
     """
     Return a summary of the selected document.
     """
@@ -92,7 +92,7 @@ def get_summary(file_name: str, token:str) -> str:
 
 
 @router.get("/translate/{doc_name}/{lang}/{token}/", tags=["agents"], response_class=PlainTextResponse)
-def translate_document(doc_name: str, lang: str, token:str) -> str:
+async def translate_document(doc_name: str, lang: str, token:str) -> str:
     """
     Translate a document into a selected language. The language param admit most commons languages.
     - token: Valid token

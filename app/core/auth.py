@@ -161,7 +161,8 @@ async def login_for_access_token(params:ProjectParams) -> Project:
             )
 
     project = params.project.lower().strip().replace(" ", "_")
-
+    if project == PROJECTS_INDEX:
+        project = "_" + project
     try:
         document_store = ElasticsearchDocumentStore(hosts=DB_HOST, index=PROJECTS_INDEX, custom_mapping=INDEX_SETTINGS)
         response = document_store.client.search(index=PROJECTS_INDEX, body={"query": {"match": {"project": project}}})

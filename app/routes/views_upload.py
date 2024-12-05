@@ -42,7 +42,7 @@ router = APIRouter()
 
 
 @router.post("/upload/", tags=["documents"])
-def upload_documents(files: Annotated[List[UploadFile], File(description="Document files to upload")], background_tasks: BackgroundTasks,
+async def upload_documents(files: Annotated[List[UploadFile], File(description="Document files to upload")], background_tasks: BackgroundTasks,
                      params: InputParams = Body(...)) -> ReturnUpload:
     """
     Accepts documents in **.docx, .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg, .txt and .srt** format. It only can be parsed by paragraphs.
@@ -64,7 +64,7 @@ def upload_documents(files: Annotated[List[UploadFile], File(description="Docume
 
 
 @router.post("/upload/plainText/", tags=["documents"])
-def upload_plain_text(input_values:PlainSRTParams, background_tasks: BackgroundTasks) -> ReturnUpload:
+async def upload_plain_text(input_values:PlainSRTParams, background_tasks: BackgroundTasks) -> ReturnUpload:
     """
     Process .srt and .txt files in plain text.
     - text: Plain text file
@@ -79,7 +79,7 @@ def upload_plain_text(input_values:PlainSRTParams, background_tasks: BackgroundT
 
 
 @router.post("/upload/url/", tags=["documents"])
-def upload_documents_from_url(params: InputParamsURL, background_tasks: BackgroundTasks) -> ReturnUpload:
+async def upload_documents_from_url(params: InputParamsURL, background_tasks: BackgroundTasks) -> ReturnUpload:
     """
     Accepts accessible URL files in **.docx, .pdf .xps, .epub, .mobi, .fb2, .cbz, .svg, .txt and .srt** format. It only can be parsed by paragraphs.
     - Metadata example for each file added: `{"name": ["some", "more"], "category": ["only_one"]}`    OR    empty
