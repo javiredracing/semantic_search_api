@@ -2,7 +2,6 @@ import logging
 
 import requests
 from haystack.components.joiners import DocumentJoiner
-from haystack.document_stores.types import FilterPolicy
 from haystack_integrations.components.retrievers.elasticsearch import ElasticsearchBM25Retriever, \
     ElasticsearchEmbeddingRetriever
 from haystack_integrations.document_stores.elasticsearch import ElasticsearchDocumentStore
