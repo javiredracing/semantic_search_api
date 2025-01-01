@@ -17,7 +17,7 @@ black==24.10.0
     # via fastapi-nano (pyproject.toml)
 build==1.0.3
     # via pip-tools
-certifi==2023.7.22
+certifi==2024.12.14
     # via
     #   httpcore
     #   httpx
