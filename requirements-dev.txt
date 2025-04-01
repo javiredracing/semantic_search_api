@@ -88,7 +88,7 @@ pydantic==2.10.6
     # via fastapi
 pydantic-core==2.27.1
     # via pydantic
-pyproject-hooks==1.0.0
+pyproject-hooks==1.2.0
     # via build
 pytest==8.3.3
     # via
