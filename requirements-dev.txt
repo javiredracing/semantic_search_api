@@ -84,7 +84,7 @@ pyasn1==0.5.0
     #   rsa
 pycparser==2.22
     # via cffi
-pydantic==2.10.6
+pydantic==2.11.5
     # via fastapi
 pydantic-core==2.27.1
     # via pydantic
