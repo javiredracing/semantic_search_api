@@ -90,7 +90,7 @@ pydantic-core==2.27.1
     # via pydantic
 pyproject-hooks==1.2.0
     # via build
-pytest==8.3.3
+pytest==8.3.5
     # via
     #   fastapi-nano (pyproject.toml)
     #   pytest-cov
