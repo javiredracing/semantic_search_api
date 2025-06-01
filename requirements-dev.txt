@@ -56,7 +56,7 @@ idna==3.4
     #   requests
 iniconfig==2.1.0
     # via pytest
-mypy==1.13.0
+mypy==1.16.0
     # via fastapi-nano (pyproject.toml)
 mypy-extensions==1.0.0
     # via
