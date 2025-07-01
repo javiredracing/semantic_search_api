@@ -102,7 +102,7 @@ python-multipart==0.0.6
     # via fastapi-nano (pyproject.toml)
 requests==2.31.0
     # via fastapi-nano (pyproject.toml)
-rsa==4.9
+rsa==4.9.1
     # via python-jose
 ruff==0.8.1
     # via fastapi-nano (pyproject.toml)
