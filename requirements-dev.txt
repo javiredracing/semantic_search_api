@@ -41,7 +41,7 @@ fastapi==0.118.0
     # via fastapi-nano (pyproject.toml)
 gunicorn==23.0.0
     # via fastapi-nano (pyproject.toml)
-h11==0.14.0
+h11==0.16.0
     # via
     #   httpcore
     #   uvicorn
