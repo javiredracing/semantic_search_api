@@ -96,7 +96,7 @@ pytest==8.4.1
     #   pytest-cov
 pytest-cov==6.0.0
     # via fastapi-nano (pyproject.toml)
-python-jose[cryptography]==3.4.0
+python-jose[cryptography]==3.5.0
     # via fastapi-nano (pyproject.toml)
 python-multipart==0.0.6
     # via fastapi-nano (pyproject.toml)
