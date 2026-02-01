@@ -94,7 +94,7 @@ pytest==8.4.2
     # via
     #   fastapi-nano (pyproject.toml)
     #   pytest-cov
-pytest-cov==6.0.0
+pytest-cov==7.0.0
     # via fastapi-nano (pyproject.toml)
 python-jose[cryptography]==3.5.0
     # via fastapi-nano (pyproject.toml)
