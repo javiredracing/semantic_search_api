@@ -70,7 +70,7 @@ packaging==26.2
     #   pytest
 passlib==1.7.4
     # via fastapi-nano (pyproject.toml)
-pathspec==0.12.1
+pathspec==1.1.1
     # via black
 pip-tools==7.5.3
     # via fastapi-nano (pyproject.toml)
