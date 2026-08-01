@@ -100,7 +100,7 @@ python-jose[cryptography]==3.5.0
     # via fastapi-nano (pyproject.toml)
 python-multipart==0.0.6
     # via fastapi-nano (pyproject.toml)
-requests==2.32.5
+requests==2.34.2
     # via fastapi-nano (pyproject.toml)
 rsa==4.9.1
     # via python-jose
