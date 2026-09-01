@@ -58,7 +58,7 @@ iniconfig==2.1.0
     # via pytest
 mypy==1.19.1
     # via fastapi-nano (pyproject.toml)
-mypy-extensions==1.0.0
+mypy-extensions==1.1.0
     # via
     #   black
     #   mypy
