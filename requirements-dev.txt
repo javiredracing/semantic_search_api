@@ -54,7 +54,7 @@ idna==3.11
     #   anyio
     #   httpx
     #   requests
-iniconfig==2.1.0
+iniconfig==2.3.0
     # via pytest
 mypy==1.19.1
     # via fastapi-nano (pyproject.toml)
